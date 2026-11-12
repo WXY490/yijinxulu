@@ -1,0 +1,25 @@
+{
+  "_说明": "密钥只放在本机这个文件里，不会进网页前端。留空 = 演示模式；填入后自动切换真实生成。改完无需重启即可生效（每次请求实时读取）。",
+  "port": 8787,
+  "llm": {
+    "_说明": "故事→分镜用的大模型，OpenAI 兼容接口。默认 DeepSeek，也可换通义/豆包/Kimi：改 baseUrl 与 model 即可。",
+    "baseUrl": "https://api.deepseek.com/v1",
+    "apiKey": "",
+    "model": "deepseek-chat"
+  },
+  "kling": {
+    "_说明": "可灵官方开发者平台 kling.ai/dev 的 AccessKey / SecretKey（JWT 鉴权）。model 用于文生视频，imageModel 用于文生图首帧，按你账号可用的填，如 kling-v2-1 / kling-v1-6。",
+    "baseUrl": "https://api-beijing.klingai.com",
+    "accessKey": "",
+    "secretKey": "",
+    "model": "kling-v3",
+    "imageModel": "kling-v2-1",
+    "mode": "std",
+    "duration": "5",
+    "aspectRatio": "16:9"
+  },
+  "video": {
+    "_说明": "视频通道：zhipu（智谱 cogvideox-flash，免费）/ kling / pixverse。zhipu 需要本机 .env.local 里的 ZHIPU_API_KEY，改完需重启 node server.js。",
+    "provider": "zhipu"
+  }
+}

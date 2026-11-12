@@ -1,0 +1,1800 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>一镜叙鲁 - 创作工作台</title>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  /* Nudge 变量：默认值即原深色主题，未调节时外观完全不变 */
+  --bg:var(--site-bg,#0a0a0f);--bg-sidebar:#0e0e16;--bg-card:var(--site-surface,#12121a);--bg-hover:#1a1a28;
+  --bg-input:#16161f;--text:var(--site-fg,#f0f0f5);--text2:var(--site-muted,#9a9ab0);--text3:#6a6a80;
+  --accent:var(--site-accent,#6c5ce7);--accent2:#a29bfe;--accent-glow:color-mix(in srgb,var(--accent) 25%,transparent);
+  --on-accent:var(--site-on-accent,#fff);
+  --border:var(--site-border,#1e1e30);--border2:#2a2a40;--success:#00b894;--danger:#ff6b6b;
+  --warn:#feca57;--radius:var(--site-radius,8px);--radius2:calc(var(--site-radius,8px) + 4px);
+  --font:var(--site-font,'Inter','PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif);
+  --motion:calc(180ms * var(--site-motion,1));
+}
+html,body{height:100%;font-family:var(--font);background:var(--bg);color:var(--text);overflow:hidden}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,textarea,select{font-family:inherit;color:var(--text);background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius);padding:8px 12px;outline:none;transition:border-color var(--motion)}
+input:focus,textarea:focus,select:focus{border-color:var(--accent)}
+textarea{resize:vertical}
+select option{background:var(--bg-card)}
+
+/* ===== LAYOUT ===== */
+.app{display:grid;grid-template-rows:48px 1fr 26px;height:100vh}
+
+/* ===== TOPBAR ===== */
+.topbar{
+  display:flex;align-items:center;gap:12px;padding:0 16px;
+  background:var(--bg-sidebar);border-bottom:1px solid var(--border);
+  z-index:10;
+}
+.topbar-brand{display:flex;align-items:center;gap:8px;font-weight:700;font-size:.92rem;flex-shrink:0}
+.topbar-logo{width:28px;height:28px;border-radius:6px;background:linear-gradient(135deg,#6c5ce7,#a29bfe);display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:800;color:#fff}
+.topbar-project{
+  flex:1;max-width:320px;padding:6px 12px;border-radius:var(--radius);
+  background:var(--bg-input);border:1px solid var(--border);font-size:.85rem;
+}
+.topbar-project:focus{border-color:var(--accent)}
+.topbar-actions{display:flex;align-items:center;gap:8px;margin-left:auto}
+.tb-btn{
+  padding:6px 14px;border-radius:var(--radius);font-size:.82rem;font-weight:600;
+  border:1px solid var(--border);transition:all var(--motion);
+}
+.tb-btn:hover{background:var(--bg-hover);border-color:var(--border2)}
+.tb-btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.tb-btn.primary:hover{background:var(--accent2)}
+.tb-btn.ghost{border-color:transparent}
+.tb-btn.ghost:hover{background:var(--bg-hover)}
+.tb-btn.icon{padding:6px 10px;font-size:.95rem;line-height:1}
+.tb-btn:disabled{opacity:.35;cursor:not-allowed}
+.tb-btn:disabled:hover{background:none;border-color:var(--border)}
+.tb-sep{width:1px;height:20px;background:var(--border);margin:0 4px}
+
+/* ===== MAIN GRID ===== */
+.main{display:grid;grid-template-columns:200px 1fr 280px;overflow:hidden}
+
+/* ===== LEFT SIDEBAR ===== */
+.sidebar{
+  background:var(--bg-sidebar);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;overflow-y:auto;
+}
+.sb-section{padding:16px 0}
+.sb-label{padding:0 16px;font-size:.7rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px}
+.sb-item{
+  display:flex;align-items:center;gap:10px;
+  padding:9px 16px;font-size:.85rem;color:var(--text2);
+  cursor:pointer;transition:all .15s;border-left:3px solid transparent;
+}
+.sb-item:hover{background:var(--bg-hover);color:var(--text)}
+.sb-item.active{background:rgba(108,92,231,0.08);color:var(--accent2);border-left-color:var(--accent)}
+.sb-item .icon{font-size:1rem;width:20px;text-align:center;flex-shrink:0}
+.sb-item .badge{margin-left:auto;background:var(--accent);color:var(--on-accent);font-size:.68rem;font-weight:700;padding:2px 7px;border-radius:10px}
+.sb-divider{height:1px;background:var(--border);margin:4px 16px}
+.sb-new{
+  margin:8px 12px;padding:8px;border-radius:var(--radius);
+  background:rgba(108,92,231,0.1);border:1px dashed rgba(108,92,231,0.3);
+  color:var(--accent2);font-size:.82rem;font-weight:600;text-align:center;
+  cursor:pointer;transition:all var(--motion);
+}
+.sb-new:hover{background:rgba(108,92,231,0.18)}
+
+/* ===== CENTER WORKSPACE ===== */
+.workspace{display:flex;flex-direction:column;overflow:hidden}
+.ws-tabs{
+  display:flex;align-items:center;gap:0;padding:0 16px;
+  background:var(--bg-sidebar);border-bottom:1px solid var(--border);
+  overflow-x:auto;flex-shrink:0;
+}
+.ws-tab{
+  padding:10px 18px;font-size:.82rem;font-weight:600;color:var(--text3);
+  border-bottom:2px solid transparent;cursor:pointer;transition:all .15s;white-space:nowrap;
+}
+.ws-tab:hover{color:var(--text2)}
+.ws-tab.active{color:var(--accent2);border-bottom-color:var(--accent)}
+.ws-body{flex:1;overflow-y:auto;padding:calc(20px * var(--site-space,1))}
+
+/* Story Input Panel */
+.panel{display:none}
+.panel.active{display:block}
+.story-toolbar{display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
+.story-toolbar select{font-size:.82rem;padding:7px 10px}
+.story-input-area{
+  width:100%;min-height:300px;padding:16px;border-radius:var(--radius2);
+  background:var(--bg-card);border:1px solid var(--border);
+  font-size:.92rem;line-height:1.8;color:var(--text);
+}
+.story-input-area::placeholder{color:var(--text3)}
+.story-actions{display:flex;gap:calc(10px * var(--site-space,1));margin-top:16px;flex-wrap:wrap}
+.action-btn{
+  padding:10px 22px;border-radius:var(--radius);font-size:.88rem;font-weight:600;
+  transition:all var(--motion);
+}
+.action-btn.primary{background:var(--accent);color:var(--on-accent)}
+.action-btn.primary:hover{background:var(--accent2)}
+.action-btn.secondary{background:var(--bg-card);border:1px solid var(--border);color:var(--text2)}
+.action-btn.secondary:hover{border-color:var(--accent);color:var(--text)}
+.action-btn:disabled{opacity:.6;cursor:wait}
+
+/* Storyboard Table */
+.sb-table-wrap{overflow-x:auto;border-radius:var(--radius2);border:1px solid var(--border)}
+.sb-table{width:100%;border-collapse:collapse;font-size:.82rem}
+.sb-table th{
+  padding:10px 12px;text-align:left;font-weight:700;font-size:.75rem;
+  color:var(--text3);letter-spacing:.5px;
+  background:var(--bg-sidebar);border-bottom:1px solid var(--border);
+  position:sticky;top:0;white-space:nowrap;
+}
+.sb-table td{
+  padding:8px 12px;border-bottom:1px solid var(--border);
+  vertical-align:top;
+}
+.sb-table tbody tr{cursor:grab}
+.sb-table tbody tr:hover td{background:rgba(108,92,231,0.03)}
+.sb-table tr.selected td{background:rgba(108,92,231,0.09)}
+.sb-table tr.active-shot td{background:rgba(108,92,231,0.06)}
+.sb-table tr.dragging{opacity:.4}
+.sb-table tr.drag-over td{border-top:2px solid var(--accent)}
+.sb-table .shot-num{font-weight:800;color:var(--accent2);width:40px;text-align:center}
+.sb-table .shot-thumb{
+  width:100px;height:65px;border-radius:6px;overflow:hidden;
+  border:1px solid var(--border);flex-shrink:0;
+}
+.sb-table .shot-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.sb-table .cell-tag{
+  display:inline-block;padding:2px 8px;border-radius:4px;font-size:.72rem;font-weight:600;
+  background:rgba(108,92,231,0.12);color:var(--accent2);margin:2px;
+}
+.sb-table input,.sb-table textarea,.sb-table select{
+  width:100%;background:transparent;border:1px solid transparent;
+  padding:4px 6px;font-size:.82rem;border-radius:4px;
+}
+.sb-table input:hover,.sb-table textarea:hover,.sb-table select:hover{border-color:var(--border)}
+.sb-table input:focus,.sb-table textarea:focus,.sb-table select:focus{border-color:var(--accent);background:var(--bg-input)}
+.sb-table textarea{min-height:40px;resize:vertical}
+.sb-table input[type=checkbox]{width:auto;cursor:pointer}
+.add-row-btn{
+  display:flex;align-items:center;justify-content:center;gap:6px;
+  width:100%;padding:12px;margin-top:12px;border-radius:var(--radius);
+  border:1px dashed var(--border2);color:var(--text3);font-size:.85rem;font-weight:600;
+  transition:all var(--motion);
+}
+.add-row-btn:hover{border-color:var(--accent);color:var(--accent2);background:rgba(108,92,231,0.05)}
+.batch-bar{
+  display:none;align-items:center;gap:10px;padding:10px 14px;margin-bottom:12px;
+  border-radius:var(--radius);background:rgba(108,92,231,0.08);
+  border:1px solid rgba(108,92,231,0.3);font-size:.82rem;flex-wrap:wrap;
+}
+.batch-bar.show{display:flex}
+.batch-bar select,.batch-bar input{padding:5px 8px;font-size:.8rem}
+.batch-bar .batch-count{font-weight:700;color:var(--accent2)}
+
+/* Asset Panel */
+.asset-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px}
+.asset-card{
+  padding:14px;border-radius:var(--radius2);
+  background:var(--bg-card);border:1px solid var(--border);
+  transition:all var(--motion);
+}
+.asset-card:hover{border-color:var(--accent);transform:translateY(-2px)}
+.asset-card-img{
+  width:100%;aspect-ratio:4/3;border-radius:var(--radius);
+  background:linear-gradient(135deg,rgba(108,92,231,0.1),rgba(116,185,255,0.08));
+  border:1px solid var(--border);margin-bottom:10px;
+  position:relative;overflow:hidden;
+}
+.upload-overlay{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  background:rgba(0,0,0,0.55);opacity:0;transition:opacity var(--motion);
+  font-size:.78rem;color:#fff;cursor:pointer;
+}
+.asset-card:hover .upload-overlay{opacity:1}
+.asset-del{
+  position:absolute;top:6px;right:6px;width:22px;height:22px;border-radius:50%;
+  background:rgba(0,0,0,0.6);color:#fff;font-size:.8rem;line-height:1;
+  display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity var(--motion);
+}
+.asset-card:hover .asset-del{opacity:1}
+.asset-del:hover{background:var(--danger)}
+.asset-card h4{font-size:.88rem;font-weight:700;margin-bottom:4px}
+.asset-card p{font-size:.78rem;color:var(--text3);line-height:1.5}
+.asset-card .asset-type{
+  display:inline-block;padding:2px 8px;border-radius:4px;font-size:.68rem;font-weight:700;
+  margin-bottom:8px;
+}
+.asset-type.char{background:rgba(108,92,231,0.15);color:var(--accent2)}
+.asset-type.scene{background:rgba(0,184,148,0.12);color:var(--success)}
+.asset-type.prop{background:rgba(254,202,87,0.12);color:var(--warn)}
+
+/* Prompt Panel */
+.prompt-list{display:flex;flex-direction:column;gap:12px}
+.prompt-card{
+  padding:16px;border-radius:var(--radius2);
+  background:var(--bg-card);border:1px solid var(--border);
+}
+.prompt-card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.prompt-card-header h4{font-size:.88rem;font-weight:700}
+.prompt-type{padding:3px 10px;border-radius:4px;font-size:.72rem;font-weight:700}
+.prompt-type.image{background:rgba(108,92,231,0.12);color:var(--accent2)}
+.prompt-type.video{background:rgba(0,184,148,0.12);color:var(--success)}
+.prompt-type.long{background:rgba(254,202,87,0.12);color:var(--warn)}
+.prompt-text{font-size:.85rem;color:var(--text2);line-height:1.7;white-space:pre-wrap}
+.prompt-copy{
+  margin-top:10px;padding:5px 12px;border-radius:var(--radius);
+  background:var(--bg-hover);border:1px solid var(--border);
+  font-size:.78rem;color:var(--text3);transition:all var(--motion);
+}
+.prompt-copy:hover{border-color:var(--accent);color:var(--accent2)}
+.prompt-actions{display:flex;gap:8px;flex-wrap:wrap}
+
+/* Storyboard Visual Panel */
+.storyboard-visual{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
+.sb-visual-card{
+  border-radius:var(--radius2);overflow:hidden;
+  background:var(--bg-card);border:1px solid var(--border);
+  transition:all var(--motion);
+}
+.sb-visual-card:hover{border-color:var(--accent)}
+.sb-visual-img{
+  aspect-ratio:16/9;background-size:cover;background-position:center;
+  position:relative;
+}
+.sb-visual-num{
+  position:absolute;top:8px;left:8px;
+  padding:3px 8px;border-radius:4px;
+  background:rgba(0,0,0,0.6);backdrop-filter:blur(4px);
+  font-size:.72rem;font-weight:700;color:var(--accent2);
+}
+.sb-visual-info{padding:12px}
+.sb-visual-info h4{font-size:.85rem;font-weight:700;margin-bottom:4px}
+.sb-visual-info p{font-size:.78rem;color:var(--text3);line-height:1.5}
+.sb-visual-info .visual-meta{font-size:.72rem;color:var(--accent2);font-weight:600;margin-bottom:4px}
+.sb-visual-info .visual-action{font-size:.74rem;color:var(--text2);margin-top:4px}
+
+/* ===== RIGHT PANEL ===== */
+.right-panel{
+  background:var(--bg-sidebar);border-left:1px solid var(--border);
+  display:flex;flex-direction:column;overflow-y:auto;
+}
+.rp-header{
+  padding:14px 16px;border-bottom:1px solid var(--border);
+  font-size:.85rem;font-weight:700;flex-shrink:0;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.rp-body{padding:16px;flex:1;overflow-y:auto}
+.rp-section{margin-bottom:20px}
+.rp-section-title{font-size:.75rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px}
+.rp-field{margin-bottom:12px}
+.rp-field label{display:block;font-size:.78rem;color:var(--text2);margin-bottom:4px;font-weight:600}
+.rp-field input,.rp-field select,.rp-field textarea{width:100%;font-size:.82rem}
+.rp-field textarea{min-height:60px}
+.rp-stat{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:8px 0;border-bottom:1px solid var(--border);font-size:.82rem;
+}
+.rp-stat:last-child{border-bottom:none}
+.rp-stat .label{color:var(--text3)}
+.rp-stat .value{font-weight:700;color:var(--text)}
+.rp-asset-mini{
+  display:flex;align-items:center;gap:8px;padding:8px;
+  border-radius:var(--radius);background:var(--bg-card);border:1px solid var(--border);
+  margin-bottom:8px;cursor:pointer;transition:all .15s;
+}
+.rp-asset-mini:hover{border-color:var(--accent)}
+.rp-asset-mini .thumb{width:36px;height:36px;border-radius:6px;background:rgba(108,92,231,0.12) center/cover no-repeat;flex-shrink:0}
+.rp-asset-mini .info{flex:1;min-width:0}
+.rp-asset-mini .info h5{font-size:.78rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rp-asset-mini .info p{font-size:.7rem;color:var(--text3)}
+
+/* ===== STATUS BAR ===== */
+.statusbar{
+  display:flex;align-items:center;gap:8px;
+  padding:4px 16px;font-size:.72rem;color:var(--text3);
+  background:var(--bg-sidebar);border-top:1px solid var(--border);
+}
+.status-dot{width:6px;height:6px;border-radius:50%;background:var(--success)}
+
+/* ===== MODAL ===== */
+.modal-bg{
+  position:fixed;inset:0;z-index:100;
+  background:rgba(0,0,0,0.6);backdrop-filter:blur(6px);
+  display:none;align-items:center;justify-content:center;
+}
+.modal-bg.open{display:flex}
+.modal-box{
+  width:90%;max-width:440px;padding:calc(28px * var(--site-space,1));max-height:85vh;overflow-y:auto;
+  background:var(--bg-card);border:1px solid var(--border);
+  border-radius:var(--radius2);position:relative;
+}
+.modal-box h3{font-size:calc(1.1rem * var(--site-type,1));font-weight:800;margin-bottom:16px}
+.modal-box .close-btn{position:absolute;top:12px;right:12px;font-size:1.1rem;color:var(--text3);cursor:pointer}
+.modal-box .close-btn:hover{color:var(--text)}
+.export-options{display:flex;flex-direction:column;gap:10px}
+.export-opt{
+  display:flex;align-items:center;gap:12px;padding:12px 14px;
+  border-radius:var(--radius);border:1px solid var(--border);
+  cursor:pointer;transition:all .15s;
+}
+.export-opt:hover{border-color:var(--accent);background:rgba(108,92,231,0.05)}
+.export-opt .eicon{font-size:1.3rem}
+.export-opt .etitle{font-size:.88rem;font-weight:700}
+.export-opt .edesc{font-size:.75rem;color:var(--text3)}
+.template-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.template-card{
+  padding:14px;border-radius:var(--radius);border:1px solid var(--border);
+  cursor:pointer;transition:all .15s;
+}
+.template-card:hover{border-color:var(--accent);background:rgba(108,92,231,0.05)}
+.template-card h4{font-size:.88rem;font-weight:700;margin-bottom:6px}
+.template-card p{font-size:.75rem;color:var(--text3);line-height:1.5}
+.project-item{
+  display:flex;align-items:center;gap:10px;padding:10px 12px;
+  border:1px solid var(--border);border-radius:var(--radius);
+  margin-bottom:8px;cursor:pointer;transition:all .15s;
+}
+.project-item:hover{border-color:var(--accent);background:rgba(108,92,231,0.05)}
+.project-item .p-name{font-size:.85rem;font-weight:700}
+.project-item .p-meta{font-size:.72rem;color:var(--text3)}
+#projectsList{max-height:52vh;overflow-y:auto;padding-right:4px}
+
+/* ===== TOAST ===== */
+.toast{
+  position:fixed;bottom:44px;left:50%;transform:translateX(-50%) translateY(20px);
+  padding:10px 22px;border-radius:var(--radius);
+  background:var(--bg-card);border:1px solid var(--accent);color:var(--text);
+  font-size:.85rem;opacity:0;pointer-events:none;transition:all .25s;z-index:200;
+  box-shadow:0 8px 30px rgba(0,0,0,.5);
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ===== VIDEO STORYBOARD ===== */
+.mode-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:20px;font-size:.72rem;font-weight:700;border:1px solid var(--border);white-space:nowrap;flex-shrink:0}
+.mode-badge.demo{background:rgba(254,202,87,0.1);color:var(--warn);border-color:rgba(254,202,87,0.3)}
+.mode-badge.real{background:rgba(0,184,148,0.1);color:var(--success);border-color:rgba(0,184,148,0.3)}
+.mode-badge.offline{background:rgba(154,154,176,0.1);color:var(--text2)}
+.sb-visual-media{aspect-ratio:16/9;position:relative;overflow:hidden;background:#000 center/cover no-repeat;cursor:pointer}
+.sb-visual-media video{width:100%;height:100%;object-fit:cover;display:block}
+.sb-visual-media .kb{position:absolute;inset:0;background-size:cover;background-position:center;transform:scale(1.05)}
+.sb-visual-media:hover .kb{animation:kenburns 8s ease-in-out infinite alternate}
+@keyframes kenburns{0%{transform:scale(1.05) translate(0,0)}100%{transform:scale(1.22) translate(-2%,-2%)}}
+.media-play-hint{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.25);opacity:0;transition:opacity var(--motion);pointer-events:none}
+.sb-visual-media:hover .media-play-hint{opacity:1}
+.media-play-hint span{width:46px;height:46px;border-radius:50%;background:rgba(0,0,0,0.55);border:2px solid rgba(255,255,255,0.7);display:flex;align-items:center;justify-content:center;font-size:1.1rem;color:#fff}
+.media-status{position:absolute;top:8px;right:8px;padding:3px 8px;border-radius:4px;font-size:.68rem;font-weight:700;background:rgba(0,0,0,0.6);color:#fff}
+.media-status.demo{color:var(--warn)}
+.media-status.processing{color:var(--accent2)}
+.media-status.succeed{color:var(--success)}
+.media-status.failed{color:var(--danger)}
+.visual-error{color:var(--danger);font-size:11px;line-height:1.45;margin:6px 0 0;word-break:break-all}
+.visual-note{color:var(--muted);font-size:11px;line-height:1.45;margin:6px 0 0}
+.video-gen-btn{margin-top:8px;width:100%;padding:6px;border-radius:var(--radius);background:var(--bg-hover);border:1px solid var(--border);font-size:.76rem;color:var(--text2);transition:all var(--motion)}
+.video-gen-btn:hover{border-color:var(--accent);color:var(--accent2)}
+.video-gen-btn:disabled{opacity:.6;cursor:wait}
+.visual-btns{display:flex;gap:6px;margin-top:8px}
+.visual-btns .video-gen-btn{margin-top:0;width:auto;flex:1}
+.image-gen-btn{flex:1;padding:6px;border-radius:var(--radius);background:var(--bg-hover);border:1px solid var(--border);font-size:.76rem;color:var(--text2);transition:all var(--motion)}
+.image-gen-btn:hover{border-color:var(--accent);color:var(--accent2)}
+.image-gen-btn:disabled{opacity:.6;cursor:wait}
+.media-status.firstframe{right:auto;left:8px;color:var(--accent2)}
+.player-box{width:92%;max-width:900px;padding:0;overflow:hidden;background:#000}
+.player-stage{position:relative;aspect-ratio:16/9;background:#000 center/cover no-repeat;overflow:hidden}
+.player-stage video{width:100%;height:100%;object-fit:contain;background:#000}
+.player-stage .kb{position:absolute;inset:0;background-size:cover;background-position:center;animation:kenburns 10s ease-in-out infinite alternate}
+.player-caption{position:absolute;left:0;right:0;bottom:0;padding:16px 20px;background:linear-gradient(transparent,rgba(0,0,0,0.85));color:#fff}
+.player-caption .cap-num{font-size:.72rem;color:var(--accent2);font-weight:700;margin-bottom:4px}
+.player-caption .cap-desc{font-size:.9rem;line-height:1.5}
+.player-caption .cap-dialogue{font-size:.8rem;color:#cfcfe0;margin-top:4px;font-style:italic}
+.player-caption .cap-action{font-size:.76rem;color:#b9b9cf;margin-top:4px}
+.player-controls{display:flex;align-items:center;gap:12px;padding:12px 16px;background:var(--bg-card)}
+.player-controls button{padding:6px 12px;border-radius:var(--radius);background:var(--bg-hover);border:1px solid var(--border);font-size:.8rem;color:var(--text)}
+.player-controls button:hover{border-color:var(--accent)}
+.player-progress{flex:1;height:4px;border-radius:2px;background:var(--border);overflow:hidden}
+.player-progress .fill{height:100%;width:0;background:var(--accent);transition:width .3s}
+.player-counter{font-size:.78rem;color:var(--text3);white-space:nowrap}
+.player-close{position:absolute;top:10px;right:12px;z-index:5;width:32px;height:32px;border-radius:50%;background:rgba(0,0,0,0.6);color:#fff;font-size:1.1rem;display:flex;align-items:center;justify-content:center}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--text3)}
+
+/* 尊重系统"减少动态效果"偏好 */
+@media (prefers-reduced-motion:reduce){
+  .sb-visual-media:hover .kb,.player-stage .kb{animation:none}
+  *,*::before,*::after{transition-duration:.01ms !important;animation-duration:.01ms !important;animation-iteration-count:1 !important}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="topbar-brand">
+      <div class="topbar-logo">YJ</div>
+      <span>一镜叙鲁</span>
+    </div>
+    <input class="topbar-project" value="未命名项目" id="projectName">
+    <span class="mode-badge offline" id="modeBadge">检测中…</span>
+    <div class="topbar-actions">
+      <button class="tb-btn icon" id="undoBtn" title="撤销 (Ctrl+Z)" disabled onclick="undo()">&#8630;</button>
+      <button class="tb-btn icon" id="redoBtn" title="重做 (Ctrl+Y)" disabled onclick="redo()">&#8631;</button>
+      <div class="tb-sep"></div>
+      <button class="tb-btn ghost" onclick="showModal('shareModal')">&#128279; 分享</button>
+      <button class="tb-btn ghost" onclick="showModal('exportModal')">&#128229; 导出</button>
+      <div class="tb-sep"></div>
+      <button class="tb-btn primary" id="saveBtn">&#128190; 保存</button>
+      <a href="index.html" class="tb-btn" style="text-decoration:none">&#8592; 返回</a>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+    <!-- LEFT SIDEBAR -->
+    <div class="sidebar">
+      <div class="sb-section">
+        <div class="sb-label">创作流程</div>
+        <div class="sb-item active" data-panel="story" onclick="switchPanel(this,'story')">
+          <span class="icon">&#128221;</span>故事输入
+        </div>
+        <div class="sb-item" data-panel="storyboard" onclick="switchPanel(this,'storyboard')">
+          <span class="icon">&#127916;</span>分镜脚本
+          <span class="badge" id="shotCount">0</span>
+        </div>
+        <div class="sb-item" data-panel="assets" onclick="switchPanel(this,'assets')">
+          <span class="icon">&#127912;</span>资产库
+          <span class="badge" id="assetCount">0</span>
+        </div>
+        <div class="sb-item" data-panel="prompts" onclick="switchPanel(this,'prompts')">
+          <span class="icon">&#9997;</span>提示词
+        </div>
+        <div class="sb-item" data-panel="visual" onclick="switchPanel(this,'visual')">
+          <span class="icon">&#128247;</span>故事板
+        </div>
+      </div>
+      <div class="sb-divider"></div>
+      <div class="sb-section">
+        <div class="sb-label">项目</div>
+        <div class="sb-item" onclick="showModal('projectsModal')"><span class="icon">&#128194;</span>我的项目</div>
+        <div class="sb-item" onclick="showModal('templateModal')"><span class="icon">&#128278;</span>模板库</div>
+      </div>
+      <div class="sb-new" onclick="newProject()">+ 新建项目</div>
+    </div>
+
+    <!-- CENTER WORKSPACE -->
+    <div class="workspace">
+      <div class="ws-tabs">
+        <div class="ws-tab active" data-panel="story" onclick="switchTab(this,'story')">故事输入</div>
+        <div class="ws-tab" data-panel="storyboard" onclick="switchTab(this,'storyboard')">分镜脚本</div>
+        <div class="ws-tab" data-panel="assets" onclick="switchTab(this,'assets')">资产库</div>
+        <div class="ws-tab" data-panel="prompts" onclick="switchTab(this,'prompts')">提示词</div>
+        <div class="ws-tab" data-panel="visual" onclick="switchTab(this,'visual')">故事板</div>
+      </div>
+      <div class="ws-body">
+
+        <!-- STORY INPUT PANEL -->
+        <div class="panel active" id="panel-story">
+          <div class="story-toolbar">
+            <select id="templateSelect" onchange="applyTemplate(this.value)">
+              <option value="">选择故事结构模板…</option>
+              <option value="three-act">三幕式结构</option>
+              <option value="hero-journey">英雄之旅</option>
+              <option value="kishotenketsu">起承转合</option>
+              <option value="short-video">短视频黄金结构</option>
+            </select>
+            <select id="styleSelect" title="影片风格">
+              <option value="国风水墨动画">国风水墨动画</option>
+              <option value="写实古风纪录片">写实古风纪录片</option>
+              <option value="卡通国风动画">卡通国风动画</option>
+            </select>
+            <button class="action-btn secondary" style="padding:7px 14px;font-size:.8rem" onclick="showModal('templateModal')">模板说明</button>
+            <button class="action-btn secondary" style="padding:7px 14px;font-size:.8rem" onclick="document.getElementById('fileInput').click()">&#128194; 导入文件</button>
+            <input type="file" id="fileInput" accept=".txt,.md" style="display:none" onchange="importFile(this)">
+          </div>
+          <textarea class="story-input-area" id="storyInput" placeholder="在这里输入你的故事...&#10;&#10;例如：&#10;黄昏时分，两个少年站在城市的天台上。远处的夕阳把天空染成橙红色。&#10;小明转过头，看着小红说：&#34;明天就要走了。&#34;&#10;小红没有回答，只是望着远方。风吹过，她的头发轻轻飘动。&#10;镜头缓缓拉远，两个身影在夕阳下越来越小..."></textarea>
+          <div class="story-actions">
+            <button class="action-btn primary" id="generateBtn" onclick="generateStoryboard()">&#129302; AI 分析并生成分镜</button>
+            <button class="action-btn secondary" id="expandBtn" onclick="expandStory()">&#10024; AI 扩写故事</button>
+            <button class="action-btn secondary" onclick="clearStory()">&#128465; 清空</button>
+          </div>
+        </div>
+
+        <!-- STORYBOARD TABLE PANEL -->
+        <div class="panel" id="panel-storyboard">
+          <div class="batch-bar" id="batchBar">
+            <span>已选 <span class="batch-count" id="batchCount">0</span> 个镜头</span>
+            <select id="batchCamera">
+              <option value="">运镜不改</option>
+              <option>固定机位</option><option>推</option><option>拉</option><option>摇</option>
+              <option>跟拍</option><option>缓慢环绕</option>
+              <option>固定镜头</option><option>缓慢推进</option><option>缓慢拉远</option>
+              <option>横移跟随</option><option>俯拍</option><option>仰拍</option>
+              <option>手持晃动</option><option>环绕</option>
+            </select>
+            <input type="number" id="batchDuration" placeholder="时长(秒)" min="1" max="60" style="width:90px">
+            <button class="action-btn primary" style="padding:6px 14px;font-size:.8rem" onclick="applyBatch()">应用</button>
+            <button class="action-btn secondary" style="padding:6px 14px;font-size:.8rem" onclick="clearSelection()">取消</button>
+          </div>
+          <div class="sb-table-wrap">
+            <table class="sb-table" id="storyboardTable">
+              <thead>
+                <tr>
+                  <th style="width:30px"><input type="checkbox" id="selectAll" onchange="toggleSelectAll(this)" title="全选"></th>
+                  <th style="width:36px">#</th>
+                  <th style="width:104px">画面</th>
+                  <th style="min-width:180px">画面描述</th>
+                  <th style="min-width:140px">台词/旁白</th>
+                  <th style="width:60px">时长</th>
+                  <th style="width:104px">运镜</th>
+                  <th style="width:84px">景别</th>
+                  <th style="width:84px">情绪</th>
+                  <th style="width:72px">节奏</th>
+                  <th style="width:40px"></th>
+                </tr>
+              </thead>
+              <tbody id="storyboardBody"></tbody>
+            </table>
+          </div>
+          <button class="add-row-btn" onclick="addShot()">+ 添加镜头（也可拖拽行排序）</button>
+        </div>
+
+        <!-- ASSETS PANEL -->
+        <div class="panel" id="panel-assets">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+            <h3 style="font-size:calc(1.1rem * var(--site-type,1));font-weight:800">资产库 <span style="font-size:.75rem;color:var(--text3);font-weight:400">参考图 + 文字设定</span></h3>
+            <button class="action-btn secondary" onclick="showModal('addAssetModal')" style="font-size:.82rem;padding:6px 14px">+ 添加资产</button>
+          </div>
+          <div class="asset-grid" id="assetGrid"></div>
+          <input type="file" id="assetImgInput" accept="image/*" style="display:none" onchange="assetImgChosen(this)">
+        </div>
+
+        <!-- PROMPTS PANEL -->
+        <div class="panel" id="panel-prompts">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;gap:12px;flex-wrap:wrap">
+            <h3 style="font-size:calc(1.1rem * var(--site-type,1));font-weight:800">提示词 <span style="font-size:.75rem;color:var(--text3);font-weight:400">中文 · 适配可灵 / 即梦</span></h3>
+            <div class="prompt-actions">
+              <button class="action-btn secondary" style="font-size:.78rem;padding:6px 12px" onclick="copyAllPrompts()">&#128203; 复制全部视频提示词</button>
+              <button class="action-btn secondary" style="font-size:.78rem;padding:6px 12px" onclick="exportPrompts('kling')">导出可灵格式</button>
+              <button class="action-btn secondary" style="font-size:.78rem;padding:6px 12px" onclick="exportPrompts('jimeng')">导出即梦格式</button>
+            </div>
+          </div>
+          <div class="prompt-list" id="promptList"></div>
+        </div>
+
+        <!-- VISUAL STORYBOARD PANEL -->
+        <div class="panel" id="panel-visual">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;gap:12px;flex-wrap:wrap">
+            <h3 style="font-size:calc(1.1rem * var(--site-type,1));font-weight:800">故事板 · 视频预览 <span style="font-size:.75rem;color:var(--text3);font-weight:400">悬停播放 · 点击看整片</span></h3>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button class="action-btn secondary" style="font-size:.8rem;padding:7px 14px" onclick="generateAllImages()">&#128444; 批量生成首帧</button>
+              <button class="action-btn secondary" style="font-size:.8rem;padding:7px 14px" onclick="generateAllVideos()">&#127916; 批量生成视频</button>
+              <button class="action-btn primary" style="font-size:.8rem;padding:7px 14px" onclick="openPlayer()">&#9654; 播放整片</button>
+            </div>
+          </div>
+          <div class="storyboard-visual" id="storyboardVisual"></div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- RIGHT PANEL -->
+    <div class="right-panel">
+      <div class="rp-header">
+        <span>镜头属性</span>
+        <span style="font-size:.75rem;color:var(--text3)" id="selectedShot">未选择</span>
+      </div>
+      <div class="rp-body">
+        <div class="rp-section">
+          <div class="rp-section-title">项目统计</div>
+          <div class="rp-stat"><span class="label">镜头总数</span><span class="value" id="statShots">0</span></div>
+          <div class="rp-stat"><span class="label">预估总时长</span><span class="value" id="statDuration">0s</span></div>
+          <div class="rp-stat"><span class="label">资产数量</span><span class="value" id="statAssets">0</span></div>
+          <div class="rp-stat"><span class="label">提示词数</span><span class="value" id="statPrompts">0</span></div>
+        </div>
+        <div class="rp-section">
+          <div class="rp-section-title">选中镜头</div>
+          <p id="noShotHint" style="font-size:.78rem;color:var(--text3);line-height:1.6">点击分镜表格中的任意行，即可在这里编辑镜头属性（角度、光线等）。</p>
+          <div id="shotProps" style="display:none">
+            <div class="rp-field">
+              <label>镜号</label>
+              <input type="text" id="rpShotNum" readonly>
+            </div>
+            <div class="rp-field">
+              <label>镜头小标题</label>
+              <input type="text" id="rpTitle" placeholder="如：风起齐鲁" onchange="updateShotProp('title',this.value)">
+            </div>
+            <div class="rp-field">
+              <label>时长（秒）</label>
+              <input type="number" id="rpDuration" min="1" max="60" onchange="updateShotProp('duration',+this.value||5)">
+            </div>
+            <div class="rp-field">
+              <label>运镜方式</label>
+              <select id="rpCamera" onchange="updateShotProp('camera',this.value)">
+                <option>固定机位</option><option>推</option><option>拉</option><option>摇</option>
+                <option>跟拍</option><option>缓慢环绕</option>
+                <option>固定镜头</option><option>缓慢推进</option><option>缓慢拉远</option>
+                <option>横移跟随</option><option>俯拍</option><option>仰拍</option>
+                <option>手持晃动</option><option>环绕</option>
+              </select>
+            </div>
+            <div class="rp-field">
+              <label>景别</label>
+              <select id="rpShotSize" onchange="updateShotProp('shotSize',this.value)">
+                <option>远景</option><option>全景</option><option>中景</option>
+                <option>近景</option><option>特写</option><option>大特写</option>
+              </select>
+            </div>
+            <div class="rp-field">
+              <label>角度</label>
+              <select id="rpAngle" onchange="updateShotProp('angle',this.value)">
+                <option>平视</option><option>俯拍</option><option>仰拍</option>
+                <option>鸟瞰</option><option>倾斜镜头</option>
+              </select>
+            </div>
+            <div class="rp-field">
+              <label>光线</label>
+              <select id="rpLight" onchange="updateShotProp('light',this.value)">
+                <option>自然光</option><option>黄金时刻逆光</option><option>柔光</option>
+                <option>硬光</option><option>霓虹夜景</option><option>剪影逆光</option>
+              </select>
+            </div>
+            <div class="rp-field">
+              <label>情绪</label>
+              <select id="rpEmotion" onchange="updateShotProp('emotion',this.value)">
+                <option>平静</option><option>温暖</option><option>忧伤</option>
+                <option>紧张</option><option>欢快</option><option>孤独</option><option>希望</option>
+              </select>
+            </div>
+            <div class="rp-field">
+              <label>节奏</label>
+              <select id="rpRhythm" onchange="updateShotProp('rhythm',this.value)">
+                <option>慢</option><option>中</option><option>快</option><option>停顿</option>
+              </select>
+            </div>
+            <div class="rp-field">
+              <label>画面描述</label>
+              <textarea id="rpDesc" rows="3" onchange="updateShotProp('desc',this.value)"></textarea>
+            </div>
+            <div class="rp-field">
+              <label>画面动作（人物/景物）</label>
+              <textarea id="rpAction" rows="2" placeholder="如：云雾缓缓流动，晨光铺满山脊" onchange="updateShotProp('action',this.value)"></textarea>
+            </div>
+            <div class="rp-field">
+              <label>台词 / 旁白 / 音效</label>
+              <textarea id="rpDialogue" rows="2" onchange="updateShotProp('dialogue',this.value)"></textarea>
+            </div>
+            <div class="rp-field">
+              <label>视频提示词（英文 · 可灵/即梦）</label>
+              <textarea id="rpVideoPrompt" rows="3" onchange="updateShotProp('videoPrompt',this.value)"></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="rp-section">
+          <div class="rp-section-title">资产速览</div>
+          <div id="rpAssets"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STATUS BAR -->
+  <div class="statusbar">
+    <span class="status-dot"></span>
+    <span id="saveStatus">就绪 · 本地自动保存已开启</span>
+    <span style="margin-left:auto">拖拽表格行排序 · Ctrl+Z 撤销 / Ctrl+Y 重做</span>
+  </div>
+</div>
+
+<!-- SHARE MODAL -->
+<div class="modal-bg" id="shareModal">
+  <div class="modal-box">
+    <span class="close-btn" onclick="hideModal('shareModal')">&times;</span>
+    <h3>分享项目</h3>
+    <p style="font-size:.85rem;color:var(--text2);margin-bottom:16px;line-height:1.7">在线分享链接将在后续版本上线。当前可复制完整项目数据发给协作伙伴，对方在一镜叙鲁「我的项目 → 导入项目」中即可还原。</p>
+    <button class="action-btn primary" style="width:100%" onclick="copyProjectData()">&#128203; 复制项目数据（JSON）</button>
+  </div>
+</div>
+
+<!-- EXPORT MODAL -->
+<div class="modal-bg" id="exportModal">
+  <div class="modal-box">
+    <span class="close-btn" onclick="hideModal('exportModal')">&times;</span>
+    <h3>导出分镜</h3>
+    <div class="export-options">
+      <div class="export-opt" onclick="exportAs('pdf')">
+        <span class="eicon">&#128196;</span>
+        <div><div class="etitle">PDF 文档</div><div class="edesc">打开打印视图，可保存为 PDF 交付审阅</div></div>
+      </div>
+      <div class="export-opt" onclick="exportAs('excel')">
+        <span class="eicon">&#128202;</span>
+        <div><div class="etitle">Excel 表格（CSV）</div><div class="edesc">含全部字段，可用 Excel / WPS 打开</div></div>
+      </div>
+      <div class="export-opt" onclick="exportAs('json')">
+        <span class="eicon">&#128187;</span>
+        <div><div class="etitle">JSON 数据</div><div class="edesc">完整项目数据，可再次导入</div></div>
+      </div>
+      <div class="export-opt" onclick="exportPrompts('kling')">
+        <span class="eicon">&#127916;</span>
+        <div><div class="etitle">可灵提示词批量导出</div><div class="edesc">按镜头导出中文视频提示词 TXT</div></div>
+      </div>
+      <div class="export-opt" onclick="exportPrompts('jimeng')">
+        <span class="eicon">&#10024;</span>
+        <div><div class="etitle">即梦提示词批量导出</div><div class="edesc">按镜头导出中文提示词 TXT</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TEMPLATE MODAL -->
+<div class="modal-bg" id="templateModal">
+  <div class="modal-box" style="max-width:560px">
+    <span class="close-btn" onclick="hideModal('templateModal')">&times;</span>
+    <h3>故事结构模板</h3>
+    <p style="font-size:.82rem;color:var(--text3);margin-bottom:14px">点击模板将其填入故事输入框，替换为你的内容后再生成分镜。</p>
+    <div class="template-grid">
+      <div class="template-card" onclick="applyTemplateById('three-act')">
+        <h4>&#127917; 三幕式结构</h4>
+        <p>建置 → 对抗 → 解决。经典影视叙事，适合剧情短片。</p>
+      </div>
+      <div class="template-card" onclick="applyTemplateById('hero-journey')">
+        <h4>&#9876;&#65039; 英雄之旅</h4>
+        <p>八阶段成长叙事，适合冒险、励志题材。</p>
+      </div>
+      <div class="template-card" onclick="applyTemplateById('kishotenketsu')">
+        <h4>&#127800; 起承转合</h4>
+        <p>东方四段式结构，适合含蓄隽永的故事。</p>
+      </div>
+      <div class="template-card" onclick="applyTemplateById('short-video')">
+        <h4>&#9889; 短视频黄金结构</h4>
+        <p>钩子 → 展开 → 反转 → 收尾，适合抖音/视频号。</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ADD ASSET MODAL -->
+<div class="modal-bg" id="addAssetModal">
+  <div class="modal-box">
+    <span class="close-btn" onclick="hideModal('addAssetModal')">&times;</span>
+    <h3>添加资产</h3>
+    <div class="rp-field">
+      <label>名称</label>
+      <input id="newAssetName" placeholder="如：小明 / 城市天台 / 旧怀表">
+    </div>
+    <div class="rp-field">
+      <label>类型</label>
+      <select id="newAssetType">
+        <option value="char">角色</option>
+        <option value="scene">场景</option>
+        <option value="prop">道具</option>
+      </select>
+    </div>
+    <div class="rp-field">
+      <label>文字设定</label>
+      <textarea id="newAssetDesc" rows="3" placeholder="外貌、性格、环境细节……会用于提示词生成"></textarea>
+    </div>
+    <div class="rp-field">
+      <label>参考图（可选）</label>
+      <input type="file" id="newAssetImg" accept="image/*" onchange="readNewAssetImg(this)">
+    </div>
+    <button class="action-btn primary" style="width:100%" onclick="finishAdd()">添加</button>
+  </div>
+</div>
+
+<!-- PROJECTS MODAL -->
+<div class="modal-bg" id="projectsModal">
+  <div class="modal-box">
+    <span class="close-btn" onclick="hideModal('projectsModal')">&times;</span>
+    <h3>我的项目</h3>
+    <p style="font-size:.78rem;color:var(--text3);margin-bottom:12px">项目保存在本机浏览器中（localStorage），点击即可切换。</p>
+    <div id="projectsList"></div>
+    <div style="display:flex;gap:8px;margin-top:12px">
+      <button class="action-btn secondary" style="font-size:.8rem;padding:7px 14px" onclick="document.getElementById('importProjectInput').click()">&#128229; 导入项目</button>
+      <input type="file" id="importProjectInput" accept=".json" style="display:none" onchange="importProject(this)">
+    </div>
+  </div>
+</div>
+
+<!-- PLAYER MODAL -->
+<div class="modal-bg" id="playerModal">
+  <div class="modal-box player-box">
+    <button class="player-close" onclick="closePlayer()">&times;</button>
+    <div class="player-stage" id="playerStage"></div>
+    <div class="player-controls">
+      <button onclick="playerPrev()">&#9198; 上一镜</button>
+      <button id="playerPlayBtn" onclick="playerToggle()">&#10074;&#10074; 暂停</button>
+      <button onclick="playerNext()">下一镜 &#9197;</button>
+      <div class="player-progress"><div class="fill" id="playerFill"></div></div>
+      <span class="player-counter" id="playerCounter">0 / 0</span>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ===== STATE =====
+const uid = () => 'p-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
+let state = { id: uid(), shots: [], assets: [], story: '', projectName: '未命名项目' };
+let selectedShots = new Set();
+let activeShotIdx = -1;
+let undoStack = [], redoStack = [];
+let autoSaveTimer = null, toastTimer = null;
+let dragIdx = -1, pendingAssetImg = '', uploadTargetIdx = -1;
+
+const CAMERAS = ['固定机位','推','拉','摇','跟拍','缓慢环绕','固定镜头','缓慢推进','缓慢拉远','横移跟随','俯拍','仰拍','手持晃动','环绕'];
+const SIZES = ['远景','全景','中景','近景','特写','大特写'];
+const EMOTIONS = ['平静','温暖','忧伤','紧张','欢快','孤独','希望'];
+const RHYTHMS = ['慢','中','快','停顿'];
+const TYPE_LABEL = { char:'角色', scene:'场景', prop:'道具' };
+
+const templates = {
+  'three-act': '【第一幕：建置】\n（在这里写：介绍主角、环境和日常状态，埋下冲突的种子）\n\n【第二幕：对抗】\n（在这里写：冲突爆发并升级，主角遭遇挑战，中点出现转折）\n\n【第三幕：解决】\n（在这里写：高潮对决，问题解决，情绪释放与结局余韵）',
+  'hero-journey': '【平凡世界】（主角的日常生活）\n\n【冒险召唤】（打破平静的事件出现）\n\n【拒绝召唤】（主角犹豫、恐惧）\n\n【遇见导师】（获得指引或力量）\n\n【跨越门槛】（正式进入未知世界）\n\n【试炼与伙伴】（考验、盟友、敌人）\n\n【最大考验】（生死关头、最低谷）\n\n【归来与蜕变】（带着收获回归，完成成长）',
+  'kishotenketsu': '【起】（开场：交代时间、地点、人物）\n\n【承】（发展：事件展开，情绪铺垫）\n\n【转】（转折：意料之外的变化，情绪顶点）\n\n【合】（收尾：余韵与留白，点题）',
+  'short-video': '【钩子 0-3秒】（一句话/一个画面抓住观众：悬念、冲突或反差）\n\n【展开 3-15秒】（快速推进剧情，信息密度拉满）\n\n【反转/高潮】（意料之外的转折，情绪爆发点）\n\n【收尾/行动号召】（金句点题，引导点赞关注或留下悬念）'
+};
+
+function esc(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// ===== DEMO DATA =====
+function loadDemo(){
+  state.projectName = '天台上的告别';
+  state.story = '黄昏时分，两个少年站在城市的天台上。远处的夕阳把天空染成橙红色。\n小明转过头，看着小红说："明天就要走了。"\n小红没有回答，只是望着远方。风吹过，她的头发轻轻飘动。\n镜头缓缓拉远，两个身影在夕阳下越来越小……';
+  state.shots = [
+    { desc:'黄昏时分，城市天台远景，夕阳将天空染成橙红色，两个少年的剪影站在栏杆旁。', dialogue:'（环境音：风声、远处城市车流声）', duration:5, camera:'固定镜头', shotSize:'远景', angle:'平视', light:'黄金时刻逆光', emotion:'平静', rhythm:'慢', img:'images/showcase-03.png', assets:['小明','小红','城市天台','夕阳天空'] },
+    { desc:'小明侧脸特写，眼神略带忧伤，背景虚化为暖色调的城市天际线。', dialogue:'小明："明天就要走了。"', duration:4, camera:'缓慢推进', shotSize:'特写', angle:'平视', light:'柔光', emotion:'忧伤', rhythm:'慢', img:'images/showcase-03.png', assets:['小明'] },
+    { desc:'小红转过头看向小明，微风吹动她的头发，表情复杂。', dialogue:'', duration:5, camera:'固定镜头', shotSize:'近景', angle:'平视', light:'黄金时刻逆光', emotion:'忧伤', rhythm:'停顿', img:'images/showcase-08.png', assets:['小红'] },
+    { desc:'两人对话的中景镜头，天台栏杆作为前景，远处城市灯光开始亮起。', dialogue:'小红："会再回来吗？"\n小明：（沉默）', duration:6, camera:'横移跟随', shotSize:'中景', angle:'平视', light:'自然光', emotion:'孤独', rhythm:'中', img:'images/showcase-03.png', assets:['小明','小红','城市天台'] },
+    { desc:'小红望向远方的背影，镜头缓慢拉远，夕阳余晖洒在她身上。', dialogue:'旁白：有些告别，是为了更好的重逢。', duration:5, camera:'缓慢拉远', shotSize:'全景', angle:'平视', light:'剪影逆光', emotion:'希望', rhythm:'慢', img:'images/showcase-08.png', assets:['小红','夕阳天空'] },
+    { desc:'俯拍镜头，两个少年并肩站在天台上，身影在地面拉出长长的影子。', dialogue:'', duration:4, camera:'俯拍', shotSize:'全景', angle:'鸟瞰', light:'黄金时刻逆光', emotion:'温暖', rhythm:'慢', img:'images/showcase-03.png', assets:['小明','小红','城市天台'] },
+    { desc:'镜头缓缓拉远至城市全景，两个身影越来越小，夕阳沉入地平线。', dialogue:'（音乐渐强，淡出）', duration:8, camera:'缓慢拉远', shotSize:'远景', angle:'鸟瞰', light:'剪影逆光', emotion:'希望', rhythm:'慢', img:'images/showcase-04.png', assets:['城市天台','城市天际线','夕阳天空'] }
+  ];
+  state.assets = [
+    { name:'小明', type:'char', desc:'少年，短发，穿着休闲T恤，眼神清澈略带忧郁', img:'images/showcase-03.png' },
+    { name:'小红', type:'char', desc:'少女，长发，穿着连衣裙，安静而倔强', img:'images/showcase-08.png' },
+    { name:'城市天台', type:'scene', desc:'高楼顶层天台，有栏杆和水泥地面，视野开阔', img:'images/showcase-03.png' },
+    { name:'夕阳天空', type:'scene', desc:'橙红色晚霞，云层层次丰富', img:'images/showcase-03.png' },
+    { name:'城市天际线', type:'scene', desc:'远处高楼群，灯光渐次亮起', img:'images/showcase-04.png' },
+    { name:'栏杆', type:'prop', desc:'天台边缘的金属栏杆，略带锈迹', img:'images/showcase-03.png' }
+  ];
+}
+
+// ===== PANEL SWITCHING =====
+function switchPanel(el, panel){ showPanel(panel); }
+function switchTab(el, panel){ showPanel(panel); }
+function showPanel(panel){
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-' + panel).classList.add('active');
+  document.querySelectorAll('.sb-item[data-panel]').forEach(i => i.classList.toggle('active', i.dataset.panel === panel));
+  document.querySelectorAll('.ws-tab').forEach(t => t.classList.toggle('active', t.dataset.panel === panel));
+  if (panel === 'storyboard') renderStoryboard();
+  if (panel === 'assets') renderAssets();
+  if (panel === 'prompts') renderPrompts();
+  if (panel === 'visual') renderVisual();
+}
+
+// ===== RENDER =====
+function selectHtml(field, i, val, opts){
+  const list = opts.includes(val) ? opts : [val, ...opts];
+  return `<select onclick="event.stopPropagation()" onchange="updateShot(${i},'${field}',this.value)">${list.map(o => `<option ${o===val?'selected':''}>${esc(o)}</option>`).join('')}</select>`;
+}
+
+function renderStoryboard(){
+  const tbody = document.getElementById('storyboardBody');
+  tbody.innerHTML = state.shots.map((s, i) => `
+    <tr draggable="true" ondragstart="dragStart(event,${i})" ondragover="dragOver(event,${i})" ondrop="drop(event,${i})" ondragend="dragEnd(event)" onclick="selectShot(${i})" class="${selectedShots.has(i)?'selected':''} ${activeShotIdx===i?'active-shot':''}">
+      <td onclick="event.stopPropagation()"><input type="checkbox" ${selectedShots.has(i)?'checked':''} onchange="toggleSelect(${i},this)"></td>
+      <td class="shot-num">${String(i+1).padStart(2,'0')}</td>
+      <td><div class="shot-thumb"><img src="${s.img}" alt="镜头${i+1}"></div></td>
+      <td><textarea rows="2" onchange="updateShot(${i},'desc',this.value)">${esc(s.desc)}</textarea></td>
+      <td><textarea rows="2" placeholder="台词/旁白/音效" onchange="updateShot(${i},'dialogue',this.value)">${esc(s.dialogue)}</textarea></td>
+      <td><input type="number" min="1" max="60" value="${s.duration}" style="width:52px" onchange="updateShot(${i},'duration',+this.value||5)"></td>
+      <td>${selectHtml('camera', i, s.camera, CAMERAS)}</td>
+      <td>${selectHtml('shotSize', i, s.shotSize, SIZES)}</td>
+      <td>${selectHtml('emotion', i, s.emotion, EMOTIONS)}</td>
+      <td>${selectHtml('rhythm', i, s.rhythm, RHYTHMS)}</td>
+      <td><button style="color:var(--text3);font-size:.85rem" title="删除镜头" onclick="event.stopPropagation();deleteShot(${i})">&#128465;</button></td>
+    </tr>
+  `).join('');
+  document.getElementById('selectAll').checked = state.shots.length > 0 && selectedShots.size === state.shots.length;
+}
+
+function renderAssets(){
+  document.getElementById('assetGrid').innerHTML = state.assets.map((a, i) => `
+    <div class="asset-card">
+      <div class="asset-card-img" style="background:url('${a.img}') center/cover no-repeat">
+        <div class="upload-overlay" onclick="uploadAssetImg(${i})">&#128247; 更换参考图</div>
+        <button class="asset-del" title="删除资产" onclick="deleteAsset(${i})">&times;</button>
+      </div>
+      <span class="asset-type ${a.type}">${TYPE_LABEL[a.type] || '资产'}</span>
+      <h4>${esc(a.name)}</h4>
+      <p>${esc(a.desc)}</p>
+    </div>
+  `).join('');
+}
+
+function buildImgPrompt(s){
+  const style = (document.getElementById('styleSelect')||{}).value || state.style || '国风水墨动画';
+  return `风格：${style}。${s.shotSize}，${s.angle}。${s.desc}${s.action ? ' 动作：' + s.action + '。' : ''} 光线：${s.light}。情绪氛围：${s.emotion}。电影质感，高清细节，专业调色，适合作为视频首帧。`;
+}
+function buildVidPrompt(s){
+  if (s.videoPrompt) return s.videoPrompt;
+  return `${s.camera}，${s.shotSize}。${s.desc}${s.action ? ' 动作：' + s.action + '。' : ''}${s.dialogue ? ' 台词/旁白：' + s.dialogue.replace(/\n/g,' ') + '。' : ''} 节奏：${s.rhythm}，时长约${s.duration}秒。情绪：${s.emotion}。电影级质感，画面流畅稳定。`;
+}
+
+// ===== 齐鲁风物 · 每日提示词池 =====
+const QILU_PROMPTS = [
+  { name:'泰山日出', tag:'五岳独尊', zh:'泰山之巅云海翻涌，一轮红日跃出地平线，金光洒满山脊。', en:'Chinese ink-wash animation style, cinematic. Slow push-in. The summit of Mount Tai above a rolling sea of clouds, a red sun leaping above the horizon, golden light spilling over the ridgeline; clouds drift and glow. Smooth stable motion, elegant composition, 5 seconds, for Kling / Jimeng.' },
+  { name:'黄河入海', tag:'母亲河', zh:'黄河蜿蜒穿过广袤平原，在东营汇入渤海，黄蓝交汇。', en:'Chinese ink-wash animation style, cinematic. Aerial slow pan. The Yellow River winding across vast plains, meeting the blue Bohai Sea at Dongying, yellow and blue waters merging; ripples glint in the sunset. Smooth stable motion, 5 seconds, for Kling / Jimeng.' },
+  { name:'曲阜孔庙', tag:'儒家之源', zh:'曲阜孔庙红墙黄瓦，银杏叶落在古老石碑旁，书香千年。', en:'Chinese ink-wash animation style, cinematic. Slow orbit. The Confucius Temple in Qufu, red walls and golden tiles, ginkgo leaves falling beside ancient stone steles; leaves drift in soft light. Smooth stable motion, 5 seconds, for Kling / Jimeng.' },
+  { name:'趵突泉', tag:'天下第一泉', zh:'济南趵突泉三股泉水喷涌，垂柳拂过清冽水面。', en:'Chinese ink-wash animation style, cinematic. Static camera. Baotu Spring in Jinan, three jets of crystal-clear water welling up, willow branches brushing the surface; water ripples outward. Smooth stable motion, 5 seconds, for Kling / Jimeng.' },
+  { name:'大明湖', tag:'泉城明珠', zh:'大明湖波光粼粼，画舫缓行，远山如黛，荷花映日。', en:'Chinese ink-wash animation style, cinematic. Lateral tracking. Daming Lake shimmering, a painted boat gliding slowly, distant hills dark as ink, lotus blossoms in the sun; ripples spread. Smooth stable motion, 5 seconds, for Kling / Jimeng.' },
+  { name:'蓬莱阁', tag:'人间仙境', zh:'蓬莱阁临海而立，云雾缭绕，海市蜃楼若隐若现。', en:'Chinese ink-wash animation style, cinematic. Slow pull-back. Penglai Pavilion standing by the sea wrapped in drifting mist, a mirage fading in and out of view; sea fog rises. Smooth stable motion, 5 seconds, for Kling / Jimeng.' },
+  { name:'潍坊风筝', tag:'鸢都', zh:'潍坊天空各式风筝迎风而起，龙头蜈蚣风筝栩栩如生。', en:'Chinese ink-wash animation style, cinematic. Low-angle tilt-up. The sky over Weifang filled with kites rising into the wind, a dragon-headed centipede kite vivid against the clouds; kites sway gracefully. Smooth stable motion, 5 seconds, for Kling / Jimeng.' },
+  { name:'尼山圣境', tag:'孔子诞生地', zh:'尼山圣境孔子像静立，山色苍翠，礼乐悠扬。', en:'Chinese ink-wash animation style, cinematic. Slow push-in. The sacred realm of Nishan, the tall statue of Confucius standing serene amid lush green mountains; mist drifts past. Smooth stable motion, 5 seconds, for Kling / Jimeng.' },
+  { name:'青岛栈桥', tag:'黄海明珠', zh:'青岛栈桥延伸入海，回澜阁矗立，海鸥掠过波涛。', en:'Chinese ink-wash animation style, cinematic. Tracking follow shot. Qingdao Zhanqiao Pier reaching into the sea, the Huilan Pavilion standing at its end, seagulls skimming the waves; waves roll gently. Smooth stable motion, 5 seconds, for Kling / Jimeng.' },
+  { name:'崂山', tag:'海上名山', zh:'崂山山海相连，云雾缠腰，道观隐于苍松之间。', en:'Chinese ink-wash animation style, cinematic. Aerial orbit. Laoshan Mountain where green peaks meet the sea, clouds wrapping the mountainside, Taoist temples hidden among pines; clouds flow slowly. Smooth stable motion, 5 seconds, for Kling / Jimeng.' },
+  { name:'台儿庄古城', tag:'运河古城', zh:'台儿庄古城水巷纵横，乌篷船摇过石桥，灯火映水。', en:'Chinese ink-wash animation style, cinematic. Lateral tracking. Taierzhuang ancient city with crisscrossing water lanes, a black-awning boat passing under a stone bridge, lanterns reflecting on the water; ripples shimmer. Smooth stable motion, 5 seconds, for Kling / Jimeng.' },
+  { name:'周村古商城', tag:'旱码头', zh:'周村古商城青砖黛瓦，老字号招牌林立，鲁商文化源远流长。', en:'Chinese ink-wash animation style, cinematic. Slow push-in. Zhoucun ancient commercial town, grey bricks and dark tiles, time-honored shop signs lining the old street; cloth flags flutter gently. Smooth stable motion, 5 seconds, for Kling / Jimeng.' },
+  { name:'微山湖', tag:'运河湿地', zh:'微山湖荷花万亩，渔船穿行芦苇荡，夕阳洒金。', en:'Chinese ink-wash animation style, cinematic. Slow pan. Weishan Lake with endless lotus blossoms, a fishing boat weaving through reeds, golden sunset spreading over the water; reeds sway. Smooth stable motion, 5 seconds, for Kling / Jimeng.' },
+  { name:'沂蒙山', tag:'红色热土', zh:'沂蒙山群峰叠翠，梯田层层，山歌回荡在山谷。', en:'Chinese ink-wash animation style, cinematic. Aerial pull-back. The Yimeng Mountains, layered green peaks and terraced fields; morning mist rises through the valleys. Smooth stable motion, 5 seconds, for Kling / Jimeng.' },
+  { name:'淄博琉璃', tag:'陶琉名城', zh:'淄博琉璃炉火通红，匠人吹制七彩琉璃，流光溢彩。', en:'Chinese ink-wash animation style, cinematic. Close-up static camera. Zibo liuli glass craft, a glowing furnace, an artisan blowing colorful molten glass; swirling colors glow and shift. Smooth stable motion, 5 seconds, for Kling / Jimeng.' },
+  { name:'杨家埠年画', tag:'民间艺术', zh:'杨家埠木版年画色彩浓烈，门神娃娃栩栩如生，年味十足。', en:'Chinese ink-wash animation style, cinematic. Slow push-in. Yangjiabu woodblock New Year paintings, vivid bold colors, door gods and chubby children figures coming to life; detailed paper texture. Smooth stable motion, 5 seconds, for Kling / Jimeng.' },
+  { name:'泰山皮影', tag:'非遗光影', zh:'泰山皮影戏幕布后光影灵动，艺人操纵影人演绎古老故事。', en:'Chinese ink-wash animation style, cinematic. Static camera. Taishan shadow puppetry, silhouettes dancing behind a lit cloth screen, an artisan manipulating the figures; shadows move gracefully. Smooth stable motion, 5 seconds, for Kling / Jimeng.' },
+  { name:'胶州秧歌', tag:'齐鲁舞韵', zh:'胶州秧歌演员彩扇翻飞，舞步轻盈，乡土气息浓郁。', en:'Chinese ink-wash animation style, cinematic. Tracking follow shot. Jiaozhou yangge folk dance, performers twirling colorful fans with light lively steps; fans and ribbons flow. Smooth stable motion, 5 seconds, for Kling / Jimeng.' },
+  { name:'海草房', tag:'胶东民居', zh:'荣成海草房屋顶覆满海草，古朴厚重，海边渔村宁静。', en:'Chinese ink-wash animation style, cinematic. Slow orbit. Rongcheng seaweed houses, thick roofs covered in dried seagrass, a quiet fishing village by the sea; grass sways in the breeze. Smooth stable motion, 5 seconds, for Kling / Jimeng.' },
+  { name:'龙山黑陶', tag:'史前文明', zh:'龙山文化黑陶薄如纸、黑如漆，蛋壳陶杯精巧绝伦。', en:'Chinese ink-wash animation style, cinematic. Close-up orbit. Longshan culture black pottery, thin as paper and black as lacquer, an exquisite eggshell-thin cup; soft light glides across the surface. Smooth stable motion, 5 seconds, for Kling / Jimeng.' },
+  { name:'糖醋鲤鱼', tag:'鲁菜经典', zh:'鲁菜糖醋鲤鱼金黄酥脆，浇汁亮泽，鲤鱼跃龙门造型生动。', en:'Chinese ink-wash animation style, cinematic. Close-up push-in. Shandong sweet-and-sour carp, golden and crisp, glossy sauce poured over, shaped like a leaping carp; sauce glistens. Smooth stable motion, 5 seconds, for Kling / Jimeng.' },
+  { name:'烟台海岸', tag:'仙境海岸', zh:'烟台海岸浪花拍岸，苹果园飘香，山海之城清新辽阔。', en:'Chinese ink-wash animation style, cinematic. Slow pan. The Yantai coast, waves breaking on the shore, apple orchards nearby, a fresh vast city of mountains and sea; waves roll in. Smooth stable motion, 5 seconds, for Kling / Jimeng.' },
+  { name:'刘公岛', tag:'甲午记忆', zh:'威海刘公岛松柏苍翠，古炮台静立，海风诉说历史。', en:'Chinese ink-wash animation style, cinematic. Aerial push-in. Liugong Island in Weihai, green pines and historic fort ruins standing quiet; sea breeze moves the grass. Smooth stable motion, 5 seconds, for Kling / Jimeng.' },
+  { name:'寿光菜乡', tag:'蔬菜之乡', zh:'寿光大棚蔬菜绿意盎然，番茄红润，现代农业生机勃勃。', en:'Chinese ink-wash animation style, cinematic. Lateral tracking. Shouguang vegetable greenhouses, lush green rows and ripe red tomatoes, vibrant modern agriculture; leaves sway gently. Smooth stable motion, 5 seconds, for Kling / Jimeng.' }
+];
+function dailyQiluPrompts(){
+  const day = Math.floor(Date.now() / 86400000);
+  const n = QILU_PROMPTS.length;
+  const start = ((day % n) + n) % n;
+  const picks = [0, 1, 2].map(k => QILU_PROMPTS[(start + k) % n]);
+  const dateStr = new Date().toLocaleDateString('zh-CN', { year:'numeric', month:'long', day:'numeric' });
+  return { picks, dateStr };
+}
+
+function renderPrompts(){
+  const list = document.getElementById('promptList');
+  const daily = dailyQiluPrompts();
+  let html = `
+    <div class="prompt-card" style="border-color:rgba(108,92,231,0.35);background:linear-gradient(135deg,rgba(108,92,231,0.08),rgba(116,185,255,0.04))">
+      <div class="prompt-card-header">
+        <h4>&#127807; 齐鲁风物 · 每日提示词</h4>
+        <span class="prompt-type long">${daily.dateStr} · 每日更新</span>
+      </div>
+      <p style="font-size:.76rem;color:var(--text3);margin-bottom:6px">每天自动刷新一组山东齐鲁主题的国风动画提示词，可直接复制到可灵 / 即梦生成视频。</p>
+      ${daily.picks.map(p => `
+        <div style="padding:10px 0;border-top:1px solid var(--border)">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+            <strong style="font-size:.85rem">${esc(p.name)}</strong>
+            <span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:.7rem;background:rgba(108,92,231,0.12);color:var(--accent2)">${esc(p.tag)}</span>
+          </div>
+          <p style="font-size:.78rem;color:var(--text2);margin-bottom:6px">${esc(p.zh)}</p>
+          <div class="prompt-text" style="font-size:.8rem">${esc(p.en)}</div>
+          <button class="prompt-copy" onclick="copyText(this)">复制</button>
+        </div>
+      `).join('')}
+    </div>
+  `;
+  state.shots.forEach((s, i) => {
+    const head = `镜头 ${String(i+1).padStart(2,'0')}${s.title ? ' · ' + esc(s.title) : ''}`;
+    html += `
+      <div class="prompt-card">
+        <div class="prompt-card-header">
+          <h4>${head} · 生图提示词</h4>
+          <span class="prompt-type image">首帧 / 参考图</span>
+        </div>
+        <div class="prompt-text">${esc(buildImgPrompt(s))}</div>
+        <button class="prompt-copy" onclick="copyText(this)">复制</button>
+      </div>
+      <div class="prompt-card">
+        <div class="prompt-card-header">
+          <h4>${head} · 视频提示词</h4>
+          <span class="prompt-type video">可灵 / 即梦${s.videoPrompt ? ' · EN' : ''}</span>
+        </div>
+        <div class="prompt-text">${esc(buildVidPrompt(s))}</div>
+        <button class="prompt-copy" onclick="copyText(this)">复制</button>
+      </div>
+    `;
+  });
+  const longPrompt = state.shots.map((s, i) => `镜头${String(i+1).padStart(2,'0')}${s.title ? '《' + s.title + '》' : ''}（${s.duration}秒，${s.camera}）：${s.desc}${s.action ? ' 动作：' + s.action : ''}`).join('\n');
+  html += `
+    <div class="prompt-card">
+      <div class="prompt-card-header">
+        <h4>完整序列</h4>
+        <span class="prompt-type long">长文本提示词</span>
+      </div>
+      <div class="prompt-text">${esc(longPrompt)}</div>
+      <button class="prompt-copy" onclick="copyText(this)">复制</button>
+    </div>
+  `;
+  list.innerHTML = html;
+}
+
+function renderVisual(){
+  const el = document.getElementById('storyboardVisual');
+  if (!state.shots.length) { el.innerHTML = '<p style="color:var(--text3);font-size:.85rem">先在「故事输入」里写故事并生成分镜，再来这里生成视频。</p>'; return; }
+  el.innerHTML = state.shots.map((s, i) => {
+    const num = String(i+1).padStart(2,'0');
+    let media;
+    if (s.videoUrl) {
+      media = `<video src="${s.videoUrl}" poster="${s.img}" muted loop playsinline preload="metadata" onmouseenter="this.play()" onmouseleave="this.pause();this.currentTime=0"></video><span class="media-status succeed">已生成</span>`;
+    } else if (s.videoStatus === 'processing') {
+      media = `<div class="kb" style="background-image:url('${s.img}')"></div><span class="media-status processing">生成中…</span>`;
+    } else {
+      const bg = s.demoImage || s.img;
+      const badge = s.videoStatus === 'demo' ? '<span class="media-status demo">演示</span>' : (s.videoStatus === 'failed' ? '<span class="media-status failed">失败</span>' : '');
+      media = `<div class="kb" style="background-image:url('${bg}')"></div><div class="media-play-hint"><span>&#9654;</span></div>${badge}`;
+    }
+    const btnLabel = s.videoUrl ? '重新生成视频' : (s.videoStatus === 'processing' ? '生成中…' : (s.videoStatus === 'demo' ? '重新生成（演示）' : '生成视频'));
+    const imgBtnLabel = s.imageStatus === 'processing' ? '首帧生成中…' : (s.imageStatus === 'succeed' ? '重新生成首帧' : (s.imageStatus === 'demo' ? '重新生成首帧（演示）' : '生成首帧'));
+    const imgBadge = s.imageStatus === 'succeed' ? '<span class="media-status firstframe">首帧 ✓</span>' : (s.imageStatus === 'demo' ? '<span class="media-status firstframe">首帧·演示</span>' : (s.imageStatus === 'processing' ? '<span class="media-status firstframe">首帧生成中…</span>' : ''));
+    return `
+      <div class="sb-visual-card">
+        <div class="sb-visual-media" onclick="openPlayer(${i})">${media}${imgBadge}</div>
+        <div class="sb-visual-info">
+          <h4>镜号 ${num}${s.title ? ' · ' + esc(s.title) : ''}</h4>
+          <p class="visual-meta">${esc(s.camera)} · ${s.duration}s</p>
+          <p>${esc(s.desc.substring(0, 50))}${s.desc.length > 50 ? '…' : ''}</p>
+          ${s.action ? `<p class="visual-action">动作：${esc(s.action)}</p>` : ''}
+          <div class="visual-btns">
+            <button class="image-gen-btn" ${s.imageStatus==='processing'?'disabled':''} onclick="generateImage(${i})">&#128444; ${imgBtnLabel}</button>
+            <button class="video-gen-btn" ${s.videoStatus==='processing'?'disabled':''} onclick="generateVideo(${i})">&#127916; ${btnLabel}</button>
+          </div>
+          ${s.videoStatus === 'failed' && s.videoError ? `<p class="visual-error">视频失败：${esc(s.videoError)}</p>` : ''}
+          ${s.imageStatus === 'failed' && s.imageError ? `<p class="visual-error">首帧失败：${esc(s.imageError)}</p>` : ''}
+          ${s.videoStatus === 'processing' && s.videoNote ? `<p class="visual-note">${esc(s.videoNote)}</p>` : ''}
+          ${s.imageStatus === 'processing' && s.imageNote ? `<p class="visual-note">${esc(s.imageNote)}</p>` : ''}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderRpAssets(){
+  document.getElementById('rpAssets').innerHTML = state.assets.map(a => `
+    <div class="rp-asset-mini" onclick="showPanel('assets')">
+      <div class="thumb" style="background-image:url('${a.img}')"></div>
+      <div class="info"><h5>${esc(a.name)}</h5><p>${TYPE_LABEL[a.type] || '资产'} · ${esc(a.desc.substring(0, 12))}</p></div>
+    </div>
+  `).join('');
+}
+
+function updateStats(){
+  const total = state.shots.reduce((a, s) => a + (+s.duration || 0), 0);
+  document.getElementById('statShots').textContent = state.shots.length;
+  document.getElementById('shotCount').textContent = state.shots.length;
+  document.getElementById('statDuration').textContent = total + 's';
+  document.getElementById('statAssets').textContent = state.assets.length;
+  document.getElementById('assetCount').textContent = state.assets.length;
+  document.getElementById('statPrompts').textContent = state.shots.length ? state.shots.length * 2 + 1 : 0;
+}
+
+function renderAll(){
+  renderStoryboard(); renderAssets(); renderPrompts(); renderVisual(); renderRpAssets(); updateStats();
+}
+
+// ===== SHOT EDITING =====
+function updateShot(i, f, v){
+  if (i < 0 || !state.shots[i]) return;
+  pushUndo();
+  state.shots[i][f] = v;
+  scheduleSave(); updateStats();
+  if (document.getElementById('panel-storyboard').classList.contains('active')) renderStoryboard();
+}
+function updateShotProp(f, v){ updateShot(activeShotIdx, f, v); }
+
+function selectShot(i){
+  activeShotIdx = i;
+  const s = state.shots[i];
+  document.getElementById('shotProps').style.display = 'block';
+  document.getElementById('noShotHint').style.display = 'none';
+  document.getElementById('selectedShot').textContent = '镜头 ' + String(i+1).padStart(2,'0');
+  document.getElementById('rpShotNum').value = String(i+1).padStart(2,'0');
+  document.getElementById('rpDuration').value = s.duration;
+  ['camera','shotSize','angle','light','emotion','rhythm'].forEach(f => {
+    const el = document.getElementById('rp' + f.charAt(0).toUpperCase() + f.slice(1));
+    if (![...el.options].some(o => o.value === s[f])) el.add(new Option(s[f], s[f]));
+    el.value = s[f];
+  });
+  document.getElementById('rpDesc').value = s.desc;
+  document.getElementById('rpTitle').value = s.title || '';
+  document.getElementById('rpAction').value = s.action || '';
+  document.getElementById('rpDialogue').value = s.dialogue;
+  document.getElementById('rpVideoPrompt').value = s.videoPrompt || '';
+  document.querySelectorAll('#storyboardBody tr').forEach((tr, idx) => tr.classList.toggle('active-shot', idx === i));
+}
+
+function addShot(){
+  pushUndo();
+  state.shots.push({ shotIndex: state.shots.length + 1, title:'', action:'', desc:'新镜头描述……', dialogue:'', duration:5, camera:'固定机位', shotSize:'中景', angle:'平视', light:'自然光', emotion:'平静', rhythm:'中', img:'images/showcase-03.png', assets:[], videoPrompt:'' });
+  renderStoryboard(); updateStats(); scheduleSave();
+}
+
+function deleteShot(i){
+  pushUndo();
+  state.shots.splice(i, 1);
+  selectedShots.clear(); activeShotIdx = -1;
+  document.getElementById('shotProps').style.display = 'none';
+  document.getElementById('noShotHint').style.display = 'block';
+  document.getElementById('selectedShot').textContent = '未选择';
+  renderStoryboard(); updateBatchBar(); updateStats(); scheduleSave();
+}
+
+// ===== DRAG & DROP =====
+function dragStart(e, i){
+  dragIdx = i;
+  e.currentTarget.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+}
+function dragOver(e, i){
+  e.preventDefault();
+  document.querySelectorAll('#storyboardBody tr').forEach(tr => tr.classList.remove('drag-over'));
+  e.currentTarget.classList.add('drag-over');
+}
+function drop(e, i){
+  e.preventDefault();
+  if (dragIdx < 0 || dragIdx === i) return;
+  pushUndo();
+  const [m] = state.shots.splice(dragIdx, 1);
+  state.shots.splice(i, 0, m);
+  selectedShots.clear(); activeShotIdx = -1;
+  renderStoryboard(); updateBatchBar(); scheduleSave();
+  toast('镜头顺序已调整');
+}
+function dragEnd(e){
+  dragIdx = -1;
+  document.querySelectorAll('#storyboardBody tr').forEach(tr => tr.classList.remove('dragging','drag-over'));
+}
+
+// ===== BATCH EDIT =====
+function toggleSelect(i, cb){
+  if (cb.checked) selectedShots.add(i); else selectedShots.delete(i);
+  updateBatchBar();
+  document.querySelectorAll('#storyboardBody tr').forEach((tr, idx) => tr.classList.toggle('selected', selectedShots.has(idx)));
+  document.getElementById('selectAll').checked = state.shots.length > 0 && selectedShots.size === state.shots.length;
+}
+function toggleSelectAll(cb){
+  selectedShots.clear();
+  if (cb.checked) state.shots.forEach((_, i) => selectedShots.add(i));
+  renderStoryboard(); updateBatchBar();
+}
+function clearSelection(){
+  selectedShots.clear();
+  renderStoryboard(); updateBatchBar();
+}
+function updateBatchBar(){
+  document.getElementById('batchCount').textContent = selectedShots.size;
+  document.getElementById('batchBar').classList.toggle('show', selectedShots.size > 0);
+}
+function applyBatch(){
+  const cam = document.getElementById('batchCamera').value;
+  const dur = +document.getElementById('batchDuration').value;
+  if (!cam && !dur) { toast('请先选择要批量修改的运镜或时长'); return; }
+  pushUndo();
+  selectedShots.forEach(i => {
+    if (cam) state.shots[i].camera = cam;
+    if (dur) state.shots[i].duration = dur;
+  });
+  toast('已批量更新 ' + selectedShots.size + ' 个镜头');
+  clearSelection(); updateStats(); scheduleSave();
+}
+
+// ===== UNDO / REDO =====
+function pushUndo(){
+  undoStack.push(JSON.stringify(state));
+  if (undoStack.length > 30) undoStack.shift();
+  redoStack.length = 0;
+  updateUndoBtns();
+}
+function undo(){
+  if (!undoStack.length) return;
+  redoStack.push(JSON.stringify(state));
+  state = JSON.parse(undoStack.pop());
+  afterStateChange(); toast('已撤销');
+}
+function redo(){
+  if (!redoStack.length) return;
+  undoStack.push(JSON.stringify(state));
+  state = JSON.parse(redoStack.pop());
+  afterStateChange(); toast('已重做');
+}
+function updateUndoBtns(){
+  document.getElementById('undoBtn').disabled = !undoStack.length;
+  document.getElementById('redoBtn').disabled = !redoStack.length;
+}
+function afterStateChange(){
+  document.getElementById('projectName').value = state.projectName;
+  document.getElementById('storyInput').value = state.story;
+  selectedShots.clear(); activeShotIdx = -1;
+  document.getElementById('shotProps').style.display = 'none';
+  document.getElementById('noShotHint').style.display = 'block';
+  document.getElementById('selectedShot').textContent = '未选择';
+  renderAll(); updateUndoBtns(); scheduleSave();
+}
+document.addEventListener('keydown', e => {
+  const tag = (e.target.tagName || '').toLowerCase();
+  if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+  if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key.toLowerCase() === 'z') { e.preventDefault(); undo(); }
+  else if ((e.ctrlKey || e.metaKey) && (e.key.toLowerCase() === 'y' || (e.shiftKey && e.key.toLowerCase() === 'z'))) { e.preventDefault(); redo(); }
+});
+
+// ===== SAVE / PROJECTS =====
+function scheduleSave(){
+  clearTimeout(autoSaveTimer);
+  autoSaveTimer = setTimeout(saveProject, 1000);
+}
+function saveProject(){
+  state.projectName = document.getElementById('projectName').value.trim() || '未命名项目';
+  state.story = document.getElementById('storyInput').value;
+  if (!state.id) state.id = uid();
+  try {
+    localStorage.setItem('yjxl_current', JSON.stringify(state));
+    let projects = [];
+    try { projects = JSON.parse(localStorage.getItem('yjxl_projects') || '[]'); } catch(e){}
+    const entry = { id: state.id, name: state.projectName, time: Date.now(), data: JSON.parse(JSON.stringify(state)) };
+    const idx = projects.findIndex(p => p.id === state.id);
+    if (idx >= 0) projects[idx] = entry; else projects.unshift(entry);
+    localStorage.setItem('yjxl_projects', JSON.stringify(projects.slice(0, 20)));
+    document.getElementById('saveStatus').textContent = '已自动保存 ' + new Date().toLocaleTimeString('zh-CN');
+  } catch(e) {
+    document.getElementById('saveStatus').textContent = '保存失败：浏览器存储不可用';
+  }
+}
+function renderProjectsList(){
+  let projects = [];
+  try { projects = JSON.parse(localStorage.getItem('yjxl_projects') || '[]'); } catch(e){}
+  const el = document.getElementById('projectsList');
+  if (!projects.length) { el.innerHTML = '<p style="font-size:.82rem;color:var(--text3)">暂无已保存的项目。</p>'; return; }
+  el.innerHTML = projects.map((p, i) => `
+    <div class="project-item" onclick="loadProject('${p.id}')">
+      <span style="font-size:1.1rem">&#128194;</span>
+      <div style="flex:1;min-width:0">
+        <div class="p-name">${esc(p.name)}${p.id === state.id ? ' <span style="color:var(--success);font-size:.7rem">· 当前</span>' : ''}</div>
+        <div class="p-meta">${(p.data && p.data.shots ? p.data.shots.length : 0)} 个镜头 · ${new Date(p.time).toLocaleString('zh-CN')}</div>
+      </div>
+      <button title="删除项目" style="color:var(--text3);font-size:.95rem;padding:4px 8px" onclick="event.stopPropagation();deleteProject('${p.id}')">&#128465;</button>
+      <span style="font-size:.75rem;color:var(--accent2)">打开 →</span>
+    </div>
+  `).join('');
+}
+function loadProject(id){
+  let projects = [];
+  try { projects = JSON.parse(localStorage.getItem('yjxl_projects') || '[]'); } catch(e){}
+  const p = projects.find(x => x.id === id);
+  if (!p) return;
+  saveProject();
+  state = JSON.parse(JSON.stringify(p.data));
+  if (!state.id) state.id = id;
+  afterStateChange(); hideModal('projectsModal');
+  toast('已打开项目：' + state.projectName);
+}
+function deleteProject(id){
+  if (!confirm('确定删除该项目？此操作不可恢复。')) return;
+  let projects = [];
+  try { projects = JSON.parse(localStorage.getItem('yjxl_projects') || '[]'); } catch(e){}
+  projects = projects.filter(p => p.id !== id);
+  localStorage.setItem('yjxl_projects', JSON.stringify(projects));
+  if (state.id === id) {
+    state = { id: uid(), shots: [], assets: [], story: '', projectName: '未命名项目' };
+    afterStateChange(); showPanel('story');
+  }
+  renderProjectsList(); toast('已删除项目');
+}
+function newProject(){
+  if (!confirm('新建项目？当前项目已自动保存，可在「我的项目」中随时打开。')) return;
+  saveProject();
+  state = { id: uid(), shots: [], assets: [], story: '', projectName: '未命名项目' };
+  afterStateChange(); showPanel('story');
+  toast('已新建项目');
+}
+function importProject(input){
+  const file = input.files[0];
+  input.value = '';
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const data = JSON.parse(reader.result);
+      if (!Array.isArray(data.shots)) throw new Error('bad');
+      pushUndo();
+      state = { id: uid(), projectName: data.projectName || '导入的项目', story: data.story || '', shots: data.shots, assets: data.assets || [] };
+      afterStateChange(); hideModal('projectsModal');
+      toast('项目导入成功');
+    } catch(e) { toast('导入失败：不是有效的一镜叙鲁项目文件'); }
+  };
+  reader.readAsText(file);
+}
+function copyProjectData(){
+  saveProject();
+  copyToClipboard(JSON.stringify(state, null, 2)).then(() => toast('项目数据已复制，可发送给协作伙伴'));
+}
+
+// ===== STORY ACTIONS =====
+function applyTemplate(v){
+  if (!v) return;
+  applyTemplateById(v);
+  document.getElementById('templateSelect').value = '';
+}
+function applyTemplateById(id){
+  if (!templates[id]) return;
+  document.getElementById('storyInput').value = templates[id];
+  state.story = templates[id];
+  hideModal('templateModal'); showPanel('story'); scheduleSave();
+  toast('模板已应用，填写内容后即可生成分镜');
+}
+function importFile(input){
+  const file = input.files[0];
+  input.value = '';
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    document.getElementById('storyInput').value = reader.result;
+    state.story = reader.result;
+    scheduleSave(); toast('已导入：' + file.name);
+  };
+  reader.readAsText(file);
+}
+function clearStory(){
+  document.getElementById('storyInput').value = '';
+  state.story = ''; scheduleSave();
+}
+async function expandStory(){
+  const ta = document.getElementById('storyInput');
+  const story = ta.value.trim();
+  if (!story) { toast('请先输入故事内容，再进行 AI 扩写'); return; }
+  const btn = document.getElementById('expandBtn');
+  btn.textContent = 'AI 扩写中…'; btn.disabled = true;
+  try {
+    const data = await postAI('/functions/v1/app/expand', { story }, 5, 15000,
+      (t, n, w) => { btn.textContent = '排队中，' + Math.round(w/1000) + ' 秒后重试（' + t + '/' + n + '）'; });
+    const text = String(data.text || '').trim();
+    if (!text) throw new Error('大模型返回为空');
+    ta.value = text;
+    state.story = ta.value;
+    scheduleSave(); toast('已根据你的文字扩充（' + story.length + ' 字 → ' + text.length + ' 字）');
+    // 扩写完成后自动续跑：生成分镜 → 批量生成视频
+    btn.textContent = '生成分镜中…';
+    await generateStoryboard();
+    if (state.shots.length) {
+      btn.textContent = '生成视频中…';
+      await generateAllVideos();
+    }
+  } catch(e) {
+    toast('扩写失败：' + (e.message || e));
+  } finally {
+    btn.innerHTML = '&#10024; AI 扩写故事'; btn.disabled = false;
+  }
+}
+function normalizeShot(s){
+  return {
+    shotIndex: +s.shotIndex || 0, title: s.title || '', action: s.action || '',
+    desc: s.desc || '', dialogue: s.dialogue || '', duration: Math.max(4, Math.min(8, +s.duration || 5)),
+    camera: s.camera || '固定机位', shotSize: s.shotSize || '中景', angle: s.angle || '平视',
+    light: s.light || '自然光', emotion: s.emotion || '平静', rhythm: s.rhythm || '中',
+    img: s.img || 'images/showcase-03.png', assets: s.assets || [],
+    videoPrompt: s.videoPrompt || '', videoUrl: s.videoUrl || '', demoImage: s.demoImage || '',
+    videoStatus: s.videoStatus || 'none', taskId: s.taskId || '',
+    imageStatus: s.imageStatus || 'none', imageTaskId: s.imageTaskId || ''
+  };
+}
+function offlineStoryboard(story){
+  const kept = [];
+  const safe = story.replace(/["“][^"”]*["”]/g, m => { kept.push(m); return '\u0002' + (kept.length - 1) + '\u0003'; });
+  const sentences = safe.split(/[。！？!?\n]+/).map(s => s.trim().replace(/\u0002(\d+)\u0003/g, (_, k) => kept[+k])).filter(s => s.length > 4).slice(0, 8);
+  const cams = ['固定机位','推','摇','跟拍','缓慢环绕','拉'];
+  const camEn = {'固定机位':'static locked-off camera','推':'slow push-in','摇':'smooth pan','跟拍':'tracking follow shot','缓慢环绕':'slow orbiting arc shot','拉':'slow pull-back'};
+  const sizes = ['远景','中景','近景','全景','特写','远景'];
+  const emos = ['平静','温暖','忧伤','紧张','希望'];
+  const lights = ['自然光','黄金时刻逆光','柔光'];
+  const style = (document.getElementById('styleSelect') || {}).value || '国风水墨动画';
+  const styleEn = {'国风水墨动画':'Chinese ink-wash animation style','写实古风纪录片':'realistic ancient-Chinese documentary style','卡通国风动画':'cartoon Chinese national-style animation'}[style] || 'Chinese ink-wash animation style';
+  return sentences.map((s, i) => {
+    const m = s.match(/["“]([^"”]+)["”]/);
+    const camera = cams[i % cams.length];
+    const duration = 4 + (i % 5);
+    return normalizeShot({
+      shotIndex: i + 1, title: '', desc: s, action: '画面随故事缓缓推进，光影流动',
+      dialogue: m ? m[1] : '', duration,
+      camera, shotSize: sizes[i % sizes.length],
+      angle: '平视', light: lights[i % lights.length],
+      emotion: emos[i % emos.length], rhythm: i % 4 === 3 ? '停顿' : '中',
+      img: 'images/showcase-0' + ((i % 9) + 1) + '.png',
+      videoPrompt: `${styleEn}, cinematic quality. ${camEn[camera]}. Elegant Qilu Chinese scenery, smooth stable motion, ${duration} seconds, for Kling / Jimeng video generation.`
+    });
+  });
+}
+async function generateStoryboard(){
+  const story = document.getElementById('storyInput').value.trim();
+  if (!story) { toast('请先输入故事内容'); return; }
+  const btn = document.getElementById('generateBtn');
+  btn.textContent = 'AI 分析中…'; btn.disabled = true;
+  const resetBtn = () => { btn.innerHTML = '&#129302; AI 分析并生成分镜'; btn.disabled = false; };
+  const finish = (shots, label) => {
+    pushUndo();
+    state.story = story;
+    state.shots = shots;
+    selectedShots.clear(); activeShotIdx = -1;
+    renderAll(); scheduleSave(); showPanel('visual');
+    resetBtn(); toast(label);
+  };
+  try {
+    const style = (document.getElementById('styleSelect') || {}).value || '';
+    const res = await fetch('/functions/v1/app/storyboard', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ story, style }) });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    const shots = data.shots.map(normalizeShot);
+    if (data.style) state.style = data.style;
+    finish(shots, '已生成 ' + shots.length + ' 个镜头（' + (data.source === 'llm' ? '大模型分析' : '本地扩写') + '），可生成视频或播放整片');
+  } catch(e) {
+    const shots = offlineStoryboard(story);
+    if (!shots.length) { resetBtn(); toast('故事内容太短，请至少写几个完整的句子'); return; }
+    finish(shots, '已离线生成 ' + shots.length + ' 个镜头');
+  }
+}
+
+// ===== ASSETS =====
+function readNewAssetImg(input){
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => { pendingAssetImg = reader.result; };
+  reader.readAsDataURL(file);
+}
+function finishAdd(){
+  const name = document.getElementById('newAssetName').value.trim();
+  if (!name) { toast('请填写资产名称'); return; }
+  pushUndo();
+  state.assets.push({
+    name, type: document.getElementById('newAssetType').value,
+    desc: document.getElementById('newAssetDesc').value.trim() || '新建资产',
+    img: pendingAssetImg || 'images/showcase-10.png'
+  });
+  pendingAssetImg = '';
+  document.getElementById('newAssetName').value = '';
+  document.getElementById('newAssetDesc').value = '';
+  document.getElementById('newAssetImg').value = '';
+  hideModal('addAssetModal');
+  renderAssets(); renderRpAssets(); updateStats(); scheduleSave();
+  toast('资产已添加');
+}
+function uploadAssetImg(i){
+  uploadTargetIdx = i;
+  document.getElementById('assetImgInput').click();
+}
+function assetImgChosen(input){
+  const file = input.files[0];
+  input.value = '';
+  if (!file || uploadTargetIdx < 0) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    pushUndo();
+    state.assets[uploadTargetIdx].img = reader.result;
+    renderAssets(); renderRpAssets(); scheduleSave();
+    toast('参考图已更新');
+  };
+  reader.readAsDataURL(file);
+}
+function deleteAsset(i){
+  pushUndo();
+  state.assets.splice(i, 1);
+  renderAssets(); renderRpAssets(); updateStats(); scheduleSave();
+}
+
+// ===== PROMPTS / EXPORT =====
+function copyText(btn){
+  const text = btn.parentElement.querySelector('.prompt-text').textContent;
+  copyToClipboard(text).then(() => {
+    btn.textContent = '已复制 ✓';
+    setTimeout(() => btn.textContent = '复制', 1500);
+  });
+}
+function copyAllPrompts(){
+  if (!state.shots.length) { toast('请先生成分镜'); return; }
+  const text = state.shots.map((s, i) => `镜头${String(i+1).padStart(2,'0')}：${buildVidPrompt(s)}`).join('\n\n');
+  copyToClipboard(text).then(() => toast('已复制全部 ' + state.shots.length + ' 条视频提示词'));
+}
+function exportPrompts(fmt){
+  hideModal('exportModal');
+  if (!state.shots.length) { toast('请先生成分镜'); return; }
+  const sep = fmt === 'kling' ? '\n---\n' : '\n\n';
+  const text = state.shots.map((s, i) => `【镜头${String(i+1).padStart(2,'0')}】\n${buildVidPrompt(s)}`).join(sep);
+  downloadFile(text, (state.projectName || '分镜') + (fmt === 'kling' ? '-可灵提示词.txt' : '-即梦提示词.txt'), 'text/plain;charset=utf-8');
+  toast(fmt === 'kling' ? '可灵格式提示词已导出' : '即梦格式提示词已导出');
+}
+function exportAs(type){
+  hideModal('exportModal');
+  const name = state.projectName || '分镜脚本';
+  if (type === 'excel') {
+    const head = ['镜号','画面描述','台词/旁白','时长(秒)','运镜','景别','角度','光线','情绪','节奏','关联资产'];
+    const rows = state.shots.map((s, i) => [i+1, s.desc, s.dialogue, s.duration, s.camera, s.shotSize, s.angle, s.light, s.emotion, s.rhythm, (s.assets || []).join('、')]);
+    const csv = '\uFEFF' + [head, ...rows].map(r => r.map(c => '"' + String(c == null ? '' : c).replace(/"/g,'""') + '"').join(',')).join('\r\n');
+    downloadFile(csv, name + '.csv', 'text/csv;charset=utf-8');
+    toast('Excel（CSV）已导出');
+  } else if (type === 'json') {
+    downloadFile(JSON.stringify(state, null, 2), name + '.json', 'application/json');
+    toast('JSON 已导出');
+  } else if (type === 'pdf') {
+    printStoryboard();
+  }
+}
+function printStoryboard(){
+  const w = window.open('', '_blank');
+  if (!w) { toast('浏览器拦截了弹窗，请允许后重试'); return; }
+  const rows = state.shots.map((s, i) => `<tr><td>${i+1}</td><td>${esc(s.desc)}</td><td>${esc(s.dialogue)}</td><td>${s.duration}s</td><td>${esc(s.camera)}</td><td>${esc(s.shotSize)}</td><td>${esc(s.angle)}</td><td>${esc(s.light)}</td><td>${esc(s.emotion)}</td></tr>`).join('');
+  w.document.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>' + esc(state.projectName) + '</title><style>body{font-family:sans-serif;padding:24px;color:#111}h1{font-size:20px}p{color:#555;font-size:13px}table{width:100%;border-collapse:collapse;font-size:12px}th,td{border:1px solid #999;padding:6px 8px;text-align:left;vertical-align:top}th{background:#eee}</style></head><body><h1>' + esc(state.projectName) + ' · 分镜脚本</h1><p>一镜叙鲁导出 · 共 ' + state.shots.length + ' 个镜头 · 在打印对话框中选择「另存为 PDF」</p><table><thead><tr><th>镜号</th><th>画面描述</th><th>台词/旁白</th><th>时长</th><th>运镜</th><th>景别</th><th>角度</th><th>光线</th><th>情绪</th></tr></thead><tbody>' + rows + '</tbody></table><script>window.onload=function(){window.print()}<\/script></body></html>');
+  w.document.close();
+}
+function downloadFile(content, filename, mime){
+  const blob = new Blob([content], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+// ===== CLIPBOARD / TOAST / MODALS =====
+function fallbackCopy(text){
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed'; ta.style.opacity = '0';
+  document.body.appendChild(ta); ta.select();
+  document.execCommand('copy'); ta.remove();
+}
+function copyToClipboard(text){
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    return navigator.clipboard.writeText(text).catch(() => fallbackCopy(text));
+  }
+  fallbackCopy(text);
+  return Promise.resolve();
+}
+function toast(msg){
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2200);
+}
+function showModal(id){
+  if (id === 'projectsModal') { saveProject(); renderProjectsList(); }
+  document.getElementById(id).classList.add('open');
+}
+function hideModal(id){ document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-bg').forEach(m => {
+  m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
+});
+
+// ===== BACKEND / VIDEO / PLAYER =====
+let backendMode = 'offline';
+async function detectBackend(){
+  const badge = document.getElementById('modeBadge');
+  try {
+    const res = await fetch('/functions/v1/app/config-status');
+    const data = await res.json();
+    backendMode = data.mode;
+    if (data.mode === 'real') { const name = { pixverse: 'PixVerse', kling: '可灵', zhipu: '智谱' }[data.provider] || '真实'; badge.className = 'mode-badge real'; badge.textContent = '真实模式 · ' + name + (data.llmConfigured ? ' + LLM' : ''); }
+    else { badge.className = 'mode-badge demo'; badge.textContent = '演示模式 · 未配置密钥'; }
+  } catch(e) {
+    backendMode = 'offline'; badge.className = 'mode-badge offline'; badge.textContent = '离线演示';
+  }
+}
+
+// 免费模型高峰期会返回 1302/1305（限流/访问量过大），这里统一退避重试
+async function postAI(url, body, tries = 20, wait = 20000, onWait) {
+  let last = '';
+  for (let t = 1; t <= tries; t++) {
+    const res = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+    const data = await res.json();
+    if (!data.error) return data;
+    last = String(data.error);
+    if (!/1302|1305|限流|速率|访问量|稍后|繁忙/.test(last)) throw new Error(last);
+    if (t < tries) { onWait && onWait(t, tries, wait); await new Promise(r => setTimeout(r, wait)); }
+  }
+  throw new Error(last);
+}
+async function generateVideo(i){
+  const s = state.shots[i];
+  if (!s) return;
+  const prompt = s.videoPrompt || buildVidPrompt(s);
+  s.videoStatus = 'processing'; s.videoError = ''; s.videoNote = '正在提交生成任务…'; renderVisual();
+  try {
+    const data = await postAI('/functions/v1/app/video', { prompt, duration: s.duration, shotIndex: i }, 20, 20000,
+      (t, n, w) => { s.videoNote = '模型排队中，' + Math.round(w/1000) + ' 秒后自动重试（' + t + '/' + n + '）'; renderVisual(); });
+    if (data.mode === 'demo') {
+      s.demoImage = data.demoImage; s.videoStatus = 'demo'; s.videoUrl = ''; s.videoNote = '';
+      renderVisual(); scheduleSave();
+      toast('镜头' + (i+1) + ' 演示视频已就绪（填可灵密钥可生成真实视频）');
+    } else {
+      s.taskId = data.taskId; s.videoNote = '已提交，正在渲染…'; renderVisual(); pollVideo(i);
+    }
+  } catch(e) {
+    s.videoStatus = 'failed'; s.videoNote = ''; s.videoError = (e.message || String(e)); renderVisual();
+  }
+}
+async function pollVideo(i){
+  const s = state.shots[i];
+  if (!s || !s.taskId) return;
+  const start = Date.now();
+  const tick = async () => {
+    if (state.shots[i] !== s) return;
+    try {
+      const res = await fetch('/functions/v1/app/video/' + encodeURIComponent(s.taskId));
+      const data = await res.json();
+      if (data.status === 'succeed' && data.videoUrl) {
+        s.videoUrl = data.videoUrl; s.videoStatus = 'succeed'; s.videoError = ''; s.videoNote = ''; renderVisual(); scheduleSave();
+        toast('镜头' + (i+1) + ' 视频生成完成'); return;
+      }
+      if (data.status === 'failed') { s.videoStatus = 'failed'; s.videoNote = ''; s.videoError = (data.message || '渲染失败'); renderVisual(); return; }
+    } catch(e) {}
+    if (Date.now() - start > 600000) { s.videoStatus = 'failed'; s.videoNote = ''; s.videoError = '渲染超时（超过 10 分钟）'; renderVisual(); return; }
+    setTimeout(tick, 4000);
+  };
+  setTimeout(tick, 4000);
+}
+async function generateAllVideos(){
+  if (!state.shots.length) { toast('请先生成分镜'); return; }
+  showPanel('visual');
+  toast('开始为 ' + state.shots.length + ' 个镜头生成视频…');
+  for (let i = 0; i < state.shots.length; i++) { await generateVideo(i); }
+}
+
+async function generateImage(i){
+  const s = state.shots[i];
+  if (!s) return;
+  const prompt = buildImgPrompt(s);
+  s.imageStatus = 'processing'; s.imageError = ''; s.imageNote = '正在提交首帧任务…'; renderVisual();
+  try {
+    const data = await postAI('/functions/v1/app/image', { prompt, shotIndex: i }, 20, 20000,
+      (t, n, w) => { s.imageNote = '模型排队中，' + Math.round(w/1000) + ' 秒后自动重试（' + t + '/' + n + '）'; renderVisual(); });
+    if (data.imageUrl) {
+      s.img = data.imageUrl; s.demoImage = ''; s.imageStatus = 'succeed';
+      renderVisual(); renderStoryboard(); scheduleSave();
+      toast('镜头' + (i+1) + ' 首帧已生成'); return;
+    }
+    if (data.mode === 'demo') {
+      s.img = data.demoImage; s.demoImage = data.demoImage; s.imageStatus = 'demo';
+      renderVisual(); renderStoryboard(); scheduleSave();
+      toast('镜头' + (i+1) + ' 演示首帧已就绪（填可灵密钥可生成真实首帧）');
+    } else {
+      s.imageTaskId = data.taskId; renderVisual(); pollImage(i);
+    }
+  } catch(e) {
+    s.imageStatus = 'failed'; s.imageNote = ''; s.imageError = (e.message || String(e)); renderVisual();
+  }
+}
+async function pollImage(i){
+  const s = state.shots[i];
+  if (!s || !s.imageTaskId) return;
+  const start = Date.now();
+  const tick = async () => {
+    if (state.shots[i] !== s) return;
+    try {
+      const res = await fetch('/functions/v1/app/image/' + encodeURIComponent(s.imageTaskId));
+      const data = await res.json();
+      if (data.status === 'succeed' && data.imageUrl) {
+        s.img = data.imageUrl; s.demoImage = ''; s.imageStatus = 'succeed'; s.imageError = ''; s.imageNote = '';
+        renderVisual(); renderStoryboard(); scheduleSave();
+        toast('镜头' + (i+1) + ' 首帧生成完成'); return;
+      }
+      if (data.status === 'failed') { s.imageStatus = 'failed'; s.imageNote = ''; s.imageError = (data.message || '首帧生成失败'); renderVisual(); return; }
+    } catch(e) {}
+    if (Date.now() - start > 300000) { s.imageStatus = 'failed'; s.imageNote = ''; s.imageError = '首帧生成超时'; renderVisual(); return; }
+    setTimeout(tick, 3000);
+  };
+  setTimeout(tick, 3000);
+}
+async function generateAllImages(){
+  if (!state.shots.length) { toast('请先生成分镜'); return; }
+  showPanel('visual');
+  toast('开始为 ' + state.shots.length + ' 个镜头生成首帧…');
+  for (let i = 0; i < state.shots.length; i++) { await generateImage(i); }
+}
+
+let playerIdx = 0, playerTimer = null, playerPlaying = true, playerRealVideo = null;
+function openPlayer(startIdx = 0){
+  if (!state.shots.length) { toast('请先生成分镜'); return; }
+  playerIdx = startIdx; playerPlaying = true;
+  document.getElementById('playerModal').classList.add('open');
+  document.getElementById('playerPlayBtn').innerHTML = '&#10074;&#10074; 暂停';
+  renderPlayerShot();
+}
+function closePlayer(){
+  document.getElementById('playerModal').classList.remove('open');
+  clearTimeout(playerTimer); stopPlayerVideo();
+}
+function stopPlayerVideo(){ if (playerRealVideo) { playerRealVideo.pause(); playerRealVideo = null; } }
+function renderPlayerShot(){
+  clearTimeout(playerTimer); stopPlayerVideo();
+  const s = state.shots[playerIdx];
+  if (!s) { closePlayer(); return; }
+  const stage = document.getElementById('playerStage');
+  const num = String(playerIdx+1).padStart(2,'0');
+  document.getElementById('playerCounter').textContent = (playerIdx+1) + ' / ' + state.shots.length;
+  document.getElementById('playerFill').style.width = ((playerIdx+1) / state.shots.length * 100) + '%';
+  const caption = `<div class="player-caption"><div class="cap-num">镜号 ${num}${s.title ? ' · ' + esc(s.title) : ''} · ${esc(s.camera)} · ${s.duration}s</div><div class="cap-desc">${esc(s.desc)}</div>${s.action ? `<div class="cap-action">动作：${esc(s.action)}</div>` : ''}${s.dialogue ? `<div class="cap-dialogue">${esc(s.dialogue)}</div>` : ''}</div>`;
+  if (s.videoUrl) {
+    stage.innerHTML = `<video id="playerVideo" src="${s.videoUrl}" autoplay playsinline></video>${caption}`;
+    const v = document.getElementById('playerVideo'); playerRealVideo = v;
+    v.onended = () => playerNext();
+    v.onerror = () => { playerTimer = setTimeout(playerNext, 3000); };
+    if (!playerPlaying) v.pause();
+  } else {
+    const bg = s.demoImage || s.img;
+    stage.innerHTML = `<div class="kb" style="background-image:url('${bg}')"></div>${caption}`;
+    if (playerPlaying) playerTimer = setTimeout(playerNext, (s.duration || 5) * 1000);
+  }
+}
+function playerNext(){ if (playerIdx < state.shots.length - 1) { playerIdx++; renderPlayerShot(); } else { closePlayer(); toast('整片播放完毕'); } }
+function playerPrev(){ if (playerIdx > 0) { playerIdx--; renderPlayerShot(); } }
+function playerToggle(){
+  playerPlaying = !playerPlaying;
+  document.getElementById('playerPlayBtn').innerHTML = playerPlaying ? '&#10074;&#10074; 暂停' : '&#9654; 播放';
+  if (playerRealVideo) { playerPlaying ? playerRealVideo.play() : playerRealVideo.pause(); }
+  else if (playerPlaying) { renderPlayerShot(); }
+  else { clearTimeout(playerTimer); }
+}
+
+// ===== INIT =====
+function init(){
+  const saved = localStorage.getItem('yjxl_current');
+  if (saved) {
+    try { state = JSON.parse(saved); } catch(e) { loadDemo(); }
+  } else {
+    loadDemo();
+  }
+  if (!Array.isArray(state.shots)) state.shots = [];
+  if (!Array.isArray(state.assets)) state.assets = [];
+  state.shots.forEach((s, i) => {
+    s.shotIndex = +s.shotIndex || i + 1; s.title = s.title || ''; s.action = s.action || '';
+    s.dialogue = s.dialogue || ''; s.angle = s.angle || '平视';
+    s.light = s.light || '自然光'; s.emotion = s.emotion || '平静';
+    s.rhythm = s.rhythm || '中'; s.shotSize = s.shotSize || '中景';
+    s.assets = s.assets || []; s.videoPrompt = s.videoPrompt || '';
+    s.videoUrl = s.videoUrl || ''; s.demoImage = s.demoImage || '';
+    s.videoStatus = s.videoStatus || 'none'; s.taskId = s.taskId || '';
+    s.imageStatus = s.imageStatus || 'none'; s.imageTaskId = s.imageTaskId || '';
+  });
+  state.id = state.id || uid();
+  try {
+    let projects = JSON.parse(localStorage.getItem('yjxl_projects') || '[]');
+    let changed = false;
+    projects.forEach(p => {
+      if (!p.id) { p.id = (p.data && p.data.id) || uid(); changed = true; }
+      if (p.data && !p.data.id) { p.data.id = p.id; changed = true; }
+    });
+    if (!projects.some(p => p.id === state.id)) {
+      const byName = projects.find(p => p.name === state.projectName);
+      if (byName) state.id = byName.id;
+    }
+    if (changed) localStorage.setItem('yjxl_projects', JSON.stringify(projects));
+  } catch(e) {}
+  document.getElementById('projectName').value = state.projectName || '未命名项目';
+  document.getElementById('storyInput').value = state.story || '';
+  if (state.style) document.getElementById('styleSelect').value = state.style;
+  renderAll(); updateUndoBtns(); detectBackend();
+}
+document.getElementById('projectName').addEventListener('change', scheduleSave);
+document.getElementById('storyInput').addEventListener('input', () => { state.story = document.getElementById('storyInput').value; scheduleSave(); });
+document.getElementById('saveBtn').addEventListener('click', function(){
+  saveProject();
+  this.innerHTML = '&#10003; 已保存';
+  setTimeout(() => { this.innerHTML = '&#128190; 保存'; }, 1500);
+  toast('项目已保存到本机');
+});
+window.addEventListener('beforeunload', () => { clearTimeout(autoSaveTimer); saveProject(); });
+init();
+</script>
+</body>
+</html>

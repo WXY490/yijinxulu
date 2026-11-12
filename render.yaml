@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: yijinxulu
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+      - key: VIDEO_PROVIDER
+        value: zhipu
+      - key: ACCESS_CODE
+        sync: false
+      - key: DEEPSEEK_API_KEY
+        sync: false
+      - key: ZHIPU_API_KEY
+        sync: false
+      - key: KLING_API_KEY
+        sync: false
+      - key: KLING_SECRET_KEY
+        sync: false
+      - key: PIXVERSE_API_KEY
+        sync: false

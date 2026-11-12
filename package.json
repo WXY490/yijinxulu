@@ -1,0 +1,15 @@
+{
+  "name": "yijinxulu",
+  "version": "1.0.0",
+  "description": "一镜叙鲁 - AI 分镜脚本创作平台（本地后端：可灵视频 + LLM 故事分析）",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "dotenv": "^18.0.10"
+  }
+}
